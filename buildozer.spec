@@ -124,7 +124,7 @@ android.verbose = True
 #
 
 # (str) python-for-android branch to use, defaults to master
-p4a.branch = 2024.01.21
+p4a.branch = master
 
 # (str) Bootstrap to use for android builds
 p4a.bootstrap = sdl2
