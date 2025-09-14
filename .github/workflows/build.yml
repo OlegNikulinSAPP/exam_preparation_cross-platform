@@ -32,6 +32,10 @@ jobs:
             libffi-dev \
             libssl-dev
 
+      - name: Accept Android SDK Licenses
+        run: |
+              yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
       - name: Install Python dependencies
         run: pip install cython buildozer
 
