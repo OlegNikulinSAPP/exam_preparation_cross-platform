@@ -37,15 +37,10 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython virtualenv
 
-      - name: Initialize Buildozer (download dependencies)
-        run: |
-          # Сначала инициализируем Buildozer, чтобы скачать необходимые компоненты
-          buildozer init
-          # Затем выполняем очистку
-          buildozer android clean
-
       - name: Build with Buildozer
-        run: buildozer android debug
+        run: |
+          # Просто запускаем сборку, Buildozer сам скачает все зависимости
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
