@@ -101,3 +101,9 @@ jobs:
         ls -la .buildozer/ 2>/dev/null || echo "No .buildozer directory"
         echo "Bin directory contents:"
         ls -la bin/ 2>/dev/null || echo "No bin directory"
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: exam-app-apk
+        path: bin/*.apk
