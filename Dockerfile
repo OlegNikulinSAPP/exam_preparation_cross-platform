@@ -7,26 +7,28 @@ ENV TZ=Europe/Moscow
 # Обновите пакеты и установите необходимые зависимости
 RUN apt-get update && \
     apt-get install -y \
-    python3-pip \
-    git \
-    zip \
-    unzip \
-    openjdk-8-jdk \
     autoconf \
-    libtool \
-    pkg-config \
-    zlib1g-dev \
+    cmake \
+    git \
+    libffi-dev \
     libncurses5-dev \
     libncursesw5-dev \
-    libtinfo5 \
-    cmake \
-    libffi-dev \
     libssl-dev \
-    cython3 \
-    && rm -rf /var/lib/apt/lists/*
+    libtinfo5 \
+    libtool \
+    openjdk-8-jdk \
+    openssl \
+    pkg-config \
+    python3-pip \
+    unzip \
+    zip \
+    zlib1g-dev && \
+    pip3 install --user \
+    buildozer==1.2.0 \
+    cython==0.29.32 \
+    virtualenv && \
+    rm -rf /var/lib/apt/lists/*
 
-# Установите Buildozer и дополнительные Python-пакеты
-RUN pip3 install --user buildozer cython
 ENV PATH="/root/.local/bin:${PATH}"
 
 # Установите рабочую директорию

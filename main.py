@@ -11,6 +11,9 @@ from kivy.core.window import Window
 from kivy.uix.popup import Popup
 from kivy.storage.jsonstore import JsonStore
 from kivy.uix.gridlayout import GridLayout
+from kivy.metrics import dp
+from kivy.clock import Clock
+from kivy.properties import StringProperty, NumericProperty
 import random
 import os
 
@@ -18,44 +21,79 @@ import os
 Window.size = (400, 600) if hasattr(Window, 'size') else None
 
 
+# Кастомное текстовое поле с автоматическим изменением высоты
+class AutoHeightTextInput(TextInput):
+    min_height = NumericProperty(dp(40))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(text=self.on_text_change)
+        self.height = self.min_height
+
+    def on_text_change(self, instance, value):
+        # Вычисляем необходимую высоту на основе текста
+        text_width = self.width - self.padding[0] - self.padding[2]
+        lines = len(self._lines)
+        line_height = self.line_height + self.line_spacing
+        new_height = max(self.min_height, lines * line_height + self.padding[1] + self.padding[3])
+
+        if new_height != self.height:
+            self.height = new_height
+            # Обновляем layout родительского контейнера
+            if self.parent:
+                self.parent.height = new_height
+                if hasattr(self.parent.parent, 'height'):
+                    self.parent.parent.height = new_height
+
+
 class AddQuestionTab(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = 10
-        self.spacing = 10
+        self.padding = dp(10)
+        self.spacing = dp(10)
         self.option_widgets = []  # Храним виджеты вариантов ответов
 
         # Поле вопроса
-        question_layout = BoxLayout(size_hint_y=None, height=100)
-        question_layout.add_widget(Label(text='Вопрос:', size_hint_x=0.3))
-        self.question_input = TextInput(multiline=True, size_hint_x=0.7)
+        question_layout = BoxLayout(size_hint_y=None, height=dp(60))
+        question_layout.add_widget(Label(text='Вопрос:', size_hint_x=0.3, font_size=dp(16)))
+        self.question_input = AutoHeightTextInput(
+            multiline=True,
+            size_hint_x=0.7,
+            min_height=dp(40),
+            font_size=dp(14)
+        )
         question_layout.add_widget(self.question_input)
         self.add_widget(question_layout)
 
         # Область для вариантов ответов
-        options_label = Label(text='Варианты ответов (отметьте правильные):', size_hint_y=None, height=30)
+        options_label = Label(
+            text='Варианты ответов (отметьте правильные):',
+            size_hint_y=None,
+            height=dp(30),
+            font_size=dp(16)
+        )
         self.add_widget(options_label)
 
-        self.options_scroll = ScrollView()
+        self.options_scroll = ScrollView(size_hint=(1, 0.6))
         self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None)
         self.options_layout.bind(minimum_height=self.options_layout.setter('height'))
         self.options_scroll.add_widget(self.options_layout)
         self.add_widget(self.options_scroll)
 
         # Кнопки управления вариантами
-        btn_layout = BoxLayout(size_hint_y=None, height=50, spacing=10)
-        self.add_btn = Button(text='Добавить вариант')
+        btn_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        self.add_btn = Button(text='Добавить вариант', font_size=dp(14))
         self.add_btn.bind(on_press=self.add_option)
         btn_layout.add_widget(self.add_btn)
 
-        self.remove_btn = Button(text='Удалить вариант')
+        self.remove_btn = Button(text='Удалить вариант', font_size=dp(14))
         self.remove_btn.bind(on_press=self.remove_option)
         btn_layout.add_widget(self.remove_btn)
         self.add_widget(btn_layout)
 
         # Кнопка сохранения вопроса
-        self.save_btn = Button(text='Добавить вопрос', size_hint_y=None, height=50)
+        self.save_btn = Button(text='Добавить вопрос', size_hint_y=None, height=dp(50), font_size=dp(16))
         self.save_btn.bind(on_press=self.save_question)
         self.add_widget(self.save_btn)
 
@@ -68,13 +106,19 @@ class AddQuestionTab(BoxLayout):
             self.show_popup("Информация", "Максимальное количество вариантов - 6")
             return
 
-        option_layout = BoxLayout(size_hint_y=None, height=80)
+        option_layout = BoxLayout(size_hint_y=None, height=dp(60))
 
         # Чекбокс для правильного ответа
         checkbox = CheckBox(size_hint_x=0.2)
 
         # Поле для текста варианта
-        text_input = TextInput(multiline=True, size_hint_x=0.8)
+        text_input = AutoHeightTextInput(
+            multiline=True,
+            size_hint_x=0.8,
+            min_height=dp(40),
+            font_size=dp(14),
+            hint_text=f"Вариант {len(self.option_widgets) + 1}"
+        )
 
         option_layout.add_widget(checkbox)
         option_layout.add_widget(text_input)
@@ -140,9 +184,9 @@ class AddQuestionTab(BoxLayout):
         self.show_popup("Успех", "Вопрос добавлен!")
 
     def show_popup(self, title, message):
-        popup_layout = BoxLayout(orientation='vertical', padding=10)
-        popup_layout.add_widget(Label(text=message))
-        close_btn = Button(text='OK', size_hint_y=None, height=40)
+        popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
+        popup_layout.add_widget(Label(text=message, font_size=dp(16)))
+        close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
         popup = Popup(title=title, content=popup_layout, size_hint=(0.8, 0.4))
         close_btn.bind(on_press=popup.dismiss)
         popup_layout.add_widget(close_btn)
@@ -153,8 +197,8 @@ class ExamTab(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = 10
-        self.spacing = 10
+        self.padding = dp(10)
+        self.spacing = dp(10)
         self.current_question = None
         self.correct_indices = []
         self.checkboxes = []
@@ -163,26 +207,38 @@ class ExamTab(BoxLayout):
         self.question_label = Label(
             text='Загрузка вопросов...',
             size_hint_y=None,
-            height=150,
-            text_size=(Window.width - 20, None),
+            height=dp(150),
+            text_size=(Window.width - dp(20), None),
             halign='left',
-            valign='top'
+            valign='top',
+            font_size=dp(20),
+            bold=True
         )
         self.question_label.bind(size=self.question_label.setter('text_size'))
         self.add_widget(self.question_label)
 
         # Область для вариантов ответов
-        options_label = Label(text='Выберите все правильные ответы:', size_hint_y=None, height=30)
+        options_label = Label(
+            text='Выберите все правильные ответы:',
+            size_hint_y=None,
+            height=dp(30),
+            font_size=dp(16)
+        )
         self.add_widget(options_label)
 
-        self.options_scroll = ScrollView()
+        self.options_scroll = ScrollView(size_hint=(1, 0.6))
         self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None)
         self.options_layout.bind(minimum_height=self.options_layout.setter('height'))
         self.options_scroll.add_widget(self.options_layout)
         self.add_widget(self.options_scroll)
 
         # Кнопка проверки
-        self.check_btn = Button(text='Проверить', size_hint_y=None, height=50)
+        self.check_btn = Button(
+            text='Проверить',
+            size_hint_y=None,
+            height=dp(50),
+            font_size=dp(16)
+        )
         self.check_btn.bind(on_press=self.check_answer)
         self.add_widget(self.check_btn)
 
@@ -218,13 +274,14 @@ class ExamTab(BoxLayout):
 
         # Создаем чекбоксы для вариантов ответов
         for i, option in enumerate(self.current_question['options']):
-            option_layout = BoxLayout(size_hint_y=None, height=60)
+            option_layout = BoxLayout(size_hint_y=None, height=dp(80))
             checkbox = CheckBox(size_hint_x=0.2)
             label = Label(
                 text=option,
-                text_size=(Window.width - 60, None),
+                text_size=(Window.width - dp(60), None),
                 halign='left',
-                valign='middle'
+                valign='middle',
+                font_size=dp(16)
             )
             label.bind(size=label.setter('text_size'))
             option_layout.add_widget(checkbox)
@@ -254,9 +311,9 @@ class ExamTab(BoxLayout):
             self.show_popup("Неправильно!", f"Правильные ответы:\n{correct_text}", self.load_question)
 
     def show_popup(self, title, message, callback=None):
-        popup_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        popup_layout.add_widget(Label(text=message))
-        close_btn = Button(text='OK', size_hint_y=None, height=40)
+        popup_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
+        popup_layout.add_widget(Label(text=message, font_size=dp(16)))
+        close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
         popup = Popup(title=title, content=popup_layout, size_hint=(0.8, 0.5))
 
         def dismiss_and_callback(instance):
