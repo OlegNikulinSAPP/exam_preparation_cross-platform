@@ -37,13 +37,31 @@ jobs:
     - name: Install Buildozer
       run: pip install buildozer
 
-    - name: Build APK
+    - name: Build APK with detailed logging
       run: |
-        buildozer android debug
-        ls -la bin/
+        # Устанавливаем подробное логирование
+        buildozer -v android debug log_level=2 2>&1 | tee build.log
+        # Сохраняем код возврата для последующей проверки
+        echo "EXIT_CODE=$?" >> $GITHUB_ENV
+
+    - name: Upload build logs
+      if: always()  # Загружаем логи даже при ошибке
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: |
+          build.log
+          .buildozer/**/*.log
 
     - name: Upload APK
+      if: env.EXIT_CODE == 0  # Загружаем APK только при успешной сборке
       uses: actions/upload-artifact@v4
       with:
         name: app-apk
         path: bin/*.apk
+
+    - name: Display error info
+      if: failure()
+      run: |
+        echo "Build failed with exit code ${{ env.EXIT_CODE }}"
+        echo "Check the build-logs artifact for detailed logs"
