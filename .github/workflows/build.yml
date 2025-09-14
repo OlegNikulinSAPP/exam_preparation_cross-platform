@@ -13,19 +13,15 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Java 8 and 11
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-8-jdk openjdk-11-jdk
-          sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-          sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
-
       - name: Install system dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install -y \
             git \
             zip \
             unzip \
+            openjdk-8-jdk \
+            openjdk-11-jdk \
             autoconf \
             libtool \
             pkg-config \
@@ -37,10 +33,23 @@ jobs:
             libffi-dev \
             libssl-dev
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+      - name: Set up Java 8 for Android SDK
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+          sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
-      - name: Accept Android SDK licenses manually
+      - name: Install Android Command Line Tools
+        run: |
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip commandlinetools-linux-8512546_latest.zip
+          mkdir -p android-sdk/cmdline-tools/latest
+          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+          rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
+          export ANDROID_HOME=$PWD/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+
+      - name: Accept Android SDK licenses
         run: |
           mkdir -p ~/.android
           mkdir -p ~/.android/licenses
@@ -48,16 +57,35 @@ jobs:
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
           echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.android/licenses/android-sdk-license
 
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install "platforms;android-30"
+          sdkmanager --install "build-tools;30.0.3"
+          sdkmanager --install "platform-tools"
+          sdkmanager --install "ndk;25.1.8937393"
+
+      - name: Set up Java 11 for Buildozer
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+          sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
       - name: Install Buildozer and dependencies
         run: |
           pip install --upgrade pip
           pip install buildozer cython virtualenv
 
+      - name: Configure Buildozer environment
+        run: |
+          export ANDROID_HOME=$PWD/android-sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393
+          export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3:$PATH
+
       - name: Build with Buildozer
         run: |
-          # Устанавливаем JAVA_HOME для Java 11, которую использует Buildozer
-          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-          export PATH=$JAVA_HOME/bin:$PATH
+          export ANDROID_HOME=$PWD/android-sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393
+          export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3:$PATH
           buildozer android debug
 
       - name: Upload APK

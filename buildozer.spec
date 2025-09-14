@@ -16,7 +16,7 @@ warn_on_root = 1
 # Android specific
 android.api = 30
 android.minapi = 21
-android.ndk = 25b
+android.ndk = 25.1.8937393
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 android.verbose = True
