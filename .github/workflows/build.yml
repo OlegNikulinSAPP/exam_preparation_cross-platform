@@ -5,21 +5,32 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
+      options: --user root
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Check environment
+        run: |
+          # Проверим доступные инструменты
+          which aidl && aidl --version
+          which adb && adb --version
+          which aapt && aapt version
+          which javac && javac -version
+          python --version
+          pip --version
 
-      - name: Install Android Studio
-        uses: android-actions/setup-android@v2
+      - name: Install additional dependencies if needed
+        run: |
+          apt-get update
+          apt-get install -y python3-pip
 
-      - name: Install Buildozer and dependencies
+      - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install buildozer cython virtualenv
+          pip install buildozer
 
       - name: Build with Buildozer
         run: |
