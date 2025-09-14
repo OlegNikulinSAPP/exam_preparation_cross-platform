@@ -13,10 +13,10 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Java 8 for Android SDK
+      - name: Install Java 8 and 11
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-8-jdk
+          sudo apt-get install -y openjdk-8-jdk openjdk-11-jdk
           sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
           sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
 
@@ -55,9 +55,9 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # Переключаемся обратно на Java 11 для сборки приложения
-          sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-          sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+          # Устанавливаем JAVA_HOME для Java 11, которую использует Buildozer
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
           buildozer android debug
 
       - name: Upload APK
