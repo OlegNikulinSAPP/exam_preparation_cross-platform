@@ -5,27 +5,63 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: kivy/buildozer:latest
-      options: --user root
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Android SDK and tools from Ubuntu repositories
         run: |
-          # Проверим доступные инструменты
-          which aidl
-          aidl --version
-          which adb
-          adb --version
-          which aapt
-          aapt version
+          sudo apt-get update
+          sudo apt-get install -y \
+            android-sdk \
+            android-sdk-platform-30 \
+            android-sdk-build-tools-30.0.3 \
+            android-platform-tools-base \
+            adb \
+            aapt
+
+          # Установим переменные окружения
+          echo "ANDROID_HOME=/usr/lib/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=/usr/lib/android-sdk" >> $GITHUB_ENV
+          echo "/usr/lib/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "/usr/lib/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
+
+      - name: Install Java
+        run: |
+          sudo apt-get install -y openjdk-11-jdk
+          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
+      - name: Install other dependencies
+        run: |
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo6 \
+            cmake \
+            libffi-dev \
+            libssl-dev
 
       - name: Install Buildozer and dependencies
         run: |
           pip install --upgrade pip
-          pip install buildozer
+          pip install buildozer cython virtualenv
+
+      - name: Verify Android tools installation
+        run: |
+          # Проверим доступность aidl
+          which aidl || find /usr -name "aidl" 2>/dev/null || echo "aidl not found"
+          ls -la /usr/lib/android-sdk/build-tools/*/aidl* 2>/dev/null || echo "No aidl in build-tools"
 
       - name: Build with Buildozer
         run: |
