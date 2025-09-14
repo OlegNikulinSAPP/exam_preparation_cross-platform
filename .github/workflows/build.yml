@@ -39,42 +39,45 @@ jobs:
           sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
           echo "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_ENV
 
-      - name: Install Android Command Line Tools
+      - name: Download and setup Android SDK
         run: |
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip commandlinetools-linux-8512546_latest.zip
-          mkdir -p android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
-          rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
+          # Download Android Command Line Tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip -q commandlinetools-linux-8512546_latest.zip
+          mkdir -p android-sdk
+          mv cmdline-tools android-sdk/
+          
+          # Setup environment variables
           echo "ANDROID_HOME=$PWD/android-sdk" >> $GITHUB_ENV
-          echo "$PWD/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "ANDROID_SDK_ROOT=$PWD/android-sdk" >> $GITHUB_ENV
+          echo "$PWD/android-sdk/cmdline-tools/bin" >> $GITHUB_PATH
+          echo "$PWD/android-sdk/platform-tools" >> $GITHUB_PATH
+          
+          # Clean up
+          rm commandlinetools-linux-8512546_latest.zip
 
       - name: Accept Android SDK licenses
         run: |
           mkdir -p ~/.android
-          mkdir -p ~/.android/licenses
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.android/licenses/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.android/licenses/android-sdk-license
+          touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses
 
       - name: Install Android SDK components
         run: |
-          sdkmanager --install "platforms;android-30"
-          sdkmanager --install "build-tools;30.0.3"
-          sdkmanager --install "platform-tools"
-          sdkmanager --install "ndk;25.1.8937393"
+          sdkmanager "platforms;android-30"
+          sdkmanager "build-tools;30.0.3"
+          sdkmanager "platform-tools"
+          sdkmanager "ndk;25.1.8937393"
+          
+          # Verify aidl is available
+          ls -la $ANDROID_HOME/build-tools/30.0.3/aidl
+          $ANDROID_HOME/build-tools/30.0.3/aidl --version
 
       - name: Set up Java 11 for Buildozer
         run: |
           sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
           sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
           echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
-
-      - name: Add Android tools to PATH
-        run: |
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_PATH
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393" >> $GITHUB_ENV
 
       - name: Install Buildozer and dependencies
         run: |
@@ -83,6 +86,8 @@ jobs:
 
       - name: Build with Buildozer
         run: |
+          # Add Android tools to PATH explicitly
+          export PATH=$ANDROID_HOME/build-tools/30.0.3:$ANDROID_HOME/platform-tools:$PATH
           buildozer android debug
 
       - name: Upload APK

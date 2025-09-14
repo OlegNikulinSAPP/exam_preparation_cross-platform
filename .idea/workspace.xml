@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Изменен buildozer.spec">
       <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -212,7 +213,23 @@
       <option name="project" value="LOCAL" />
       <updated>1757880611902</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Изменен buildozer.spec">
+      <option name="closed" value="true" />
+      <created>1757881284928</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1757881284928</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Изменен buildozer.spec">
+      <option name="closed" value="true" />
+      <created>1757881613753</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1757881613753</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
