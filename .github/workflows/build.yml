@@ -5,113 +5,27 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
+      options: --user root
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install system dependencies
+      - name: Check environment
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            openjdk-8-jdk \
-            openjdk-11-jdk \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo6 \
-            cmake \
-            libffi-dev \
-            libssl-dev
-
-      - name: Set up Java 8 for Android SDK
-        run: |
-          sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-          sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
-          echo "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_ENV
-
-      - name: Download and setup Android SDK with correct structure
-        run: |
-          # Create Android SDK directory
-          mkdir -p android-sdk
-          cd android-sdk
-          
-          # Download Android Command Line Tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip -q commandlinetools-linux-8512546_latest.zip
-          
-          # Check what was extracted
-          ls -la
-          
-          # The extracted folder might be named 'tools', not 'cmdline-tools'
-          # Move it to the correct location
-          mkdir -p cmdline-tools
-          if [ -d "tools" ]; then
-            mv tools cmdline-tools/latest
-          else
-            # If it's already named cmdline-tools, move its contents
-            mv cmdline-tools cmdline-tools-temp
-            mkdir -p cmdline-tools
-            mv cmdline-tools-temp cmdline-tools/latest
-          fi
-          
-          # Setup environment variables
-          echo "ANDROID_HOME=$PWD" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$PWD" >> $GITHUB_ENV
-          echo "$PWD/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          
-          # Clean up
-          rm commandlinetools-linux-8512546_latest.zip
-          cd ..
-
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          # Use the correct path to sdkmanager
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-
-      - name: Install Android SDK components
-        run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.1.8937393"
-          
-          # Add platform-tools and build-tools to PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_PATH
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393" >> $GITHUB_ENV
-
-      - name: Verify Android tools installation
-        run: |
-          # Check if aidl is available
-          ls -la $ANDROID_HOME/build-tools/30.0.3/aidl*
-          $ANDROID_HOME/build-tools/30.0.3/aidl --version || echo "aidl not found"
-          
-          # Check other important tools
-          which adb || echo "adb not found"
-          which aapt || echo "aapt not found"
-
-      - name: Set up Java 11 for Buildozer
-        run: |
-          sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-          sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
-          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+          # Проверим доступные инструменты
+          which aidl
+          aidl --version
+          which adb
+          adb --version
+          which aapt
+          aapt version
 
       - name: Install Buildozer and dependencies
         run: |
           pip install --upgrade pip
-          pip install buildozer cython virtualenv
+          pip install buildozer
 
       - name: Build with Buildozer
         run: |
