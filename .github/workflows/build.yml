@@ -5,105 +5,41 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Debug project structure
-      run: |
-        echo "Current directory: $(pwd)"
-        echo "Project contents:"
-        ls -la
-        echo "Checking for buildozer.spec:"
-        if [ -f buildozer.spec ]; then
-          echo "buildozer.spec found!"
-          cat buildozer.spec
-        else
-          echo "buildozer.spec NOT found!"
-          echo "Initializing buildozer..."
-          pip install buildozer
-          buildozer init
-        fi
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            openjdk-11-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo6 \
+            cmake \
+            libffi-dev \
+            libssl-dev
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          git \
-          zip \
-          unzip \
-          openjdk-11-jdk \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          libtinfo6 \
-          cmake \
-          libffi-dev \
-          libssl-dev
+      - name: Install Python dependencies
+        run: pip install cython buildozer
 
-    - name: Install Buildozer
-      run: pip install buildozer
+      - name: Build with Buildozer
+        run: buildozer android debug
 
-    - name: Create debug information
-      run: |
-        echo "Python version: $(python --version)"
-        echo "Pip version: $(pip --version)"
-        echo "Java version: $(java -version 2>&1)"
-        echo "Buildozer version: $(buildozer --version 2>&1 || echo 'Not available')"
-        echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        mkdir -p .buildozer
-        echo "Buildozer directory created"
-
-    - name: Build APK with detailed logging
-      run: |
-        # Создаем файл лога заранее
-        touch build.log
-        # Пытаемся выполнить сборку с подробным логированием
-        buildozer -v android debug log_level=2 2>&1 | tee -a build.log
-        echo "EXIT_CODE=$?" >> $GITHUB_ENV
-
-    - name: Upload any available logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: debug-info
-        path: |
-          build.log
-          .buildozer/
-        if-no-files-found: warn
-
-    - name: Check and upload APK
-      if: env.EXIT_CODE == 0
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-apk
-        path: bin/
-        if-no-files-found: warn
-
-    - name: Display final status
-      if: always()
-      run: |
-        echo "Build process completed with exit code: ${{ env.EXIT_CODE }}"
-        echo "Current directory contents:"
-        ls -la
-        echo "Buildozer directory contents:"
-        ls -la .buildozer/ 2>/dev/null || echo "No .buildozer directory"
-        echo "Bin directory contents:"
-        ls -la bin/ 2>/dev/null || echo "No bin directory"
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: exam-app-apk
-        path: bin/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apk
+          path: bin/*.apk
