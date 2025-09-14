@@ -7,6 +7,7 @@ source.include_exts = py,png,jpg,kv,atlas
 version = 0.1
 requirements = python3, kivy
 orientation = portrait
+android.build_tools_version = 34.0.0  # Добавьте эту строку
 
 [buildozer]
 log_level = 2

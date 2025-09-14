@@ -40,11 +40,16 @@ jobs:
       - name: Accept Android SDK licenses manually
         run: |
           mkdir -p ~/.android
-          # Создаем каталог для лицензий, если его нет
           mkdir -p ~/.android/licenses
-          # Записываем стандартные лицензии
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.android/licenses/android-sdk-license
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
+          # Добавляем лицензию для Build-Tools
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.android/licenses/android-sdk-license
+
+      - name: Install specific Build-Tools version
+        run: |
+          # Явно устанавливаем нужную версию Build-Tools
+          yes | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;34.0.0"
 
       - name: Build with Buildozer
         run: |
