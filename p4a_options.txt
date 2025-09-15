@@ -2,7 +2,7 @@ p4a apk \
   --dist_name=examapp \
   --bootstrap=sdl2 \
   --requirements=python3,kivy \
-  --arch=arm64-v8a \  # Уберите строку с armeabi-v7a
+  --arch=arm64-v8a \
   --android-api=33 \
   --private=. \
   --package=org.exam.examapp \
@@ -10,4 +10,5 @@ p4a apk \
   --version=0.1 \
   --orientation=portrait \
   --window \
-  --permission=INTERNET
+  --permission=INTERNET \
+  --ignore-setup-py

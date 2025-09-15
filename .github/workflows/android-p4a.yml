@@ -74,7 +74,6 @@ jobs:
         run: |
           mkdir -p recipes/pyjnius
           cat > recipes/pyjnius/__init__.py << EOF
-      
           from pythonforandroid.recipes.pyjnius import PyjniusRecipe
 
           class PyJniusRecipe(PyjniusRecipe):
@@ -99,6 +98,7 @@ jobs:
             --orientation=portrait \
             --window \
             --permission=INTERNET \
+            --ignore-setup-py \
             --local-recipes=recipes
 
       - name: Upload APK
