@@ -74,13 +74,13 @@ jobs:
         run: |
           mkdir -p recipes/pyjnius
           cat > recipes/pyjnius/__init__.py << EOF
-from pythonforandroid.recipes.pyjnius import PyJniusRecipe
+          from pythonforandroid.recipes.pyjnius import PyJniusRecipe
 
-class PyJniusRecipe(PyJniusRecipe):
-    version = 'master'
-    url = 'https://github.com/kivy/pyjnius/archive/master.zip'
+          class PyJniusRecipe(PyJniusRecipe):
+              version = 'master'
+              url = 'https://github.com/kivy/pyjnius/archive/master.zip'
 
-recipe = PyJniusRecipe()
+          recipe = PyJniusRecipe()
 EOF
 
       - name: Build with Python-for-Android
