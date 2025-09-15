@@ -71,6 +71,12 @@ jobs:
           sdkmanager "build-tools;33.0.0"
           sdkmanager "platform-tools"
 
+      - name: Remove problematic Python 2 scripts from NDK
+        run: |
+          # Удаляем все проблемные Python 2 скрипты из NDK
+          find "$ANDROID_NDK_HOME" -name "*.py" -exec grep -l "print [^']" {} \; | xargs rm -f || true
+          find "$ANDROID_NDK_HOME" -name "*.py" -exec grep -l "print '" {} \; | xargs rm -f || true
+
       - name: Create custom recipes
         run: |
           mkdir -p recipes/pyjnius
@@ -129,8 +135,7 @@ jobs:
             --permission=INTERNET \
             --ignore-setup-py \
             --local-recipes=recipes \
-            --ndk-api=21 \
-            --no-compile-python  # Отключаем компиляцию Python файлов
+            --ndk-api=21
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
