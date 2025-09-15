@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" afterDir="false" />
-    </list>
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -301,7 +299,23 @@
       <option name="project" value="LOCAL" />
       <updated>1757945446467</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
+      <option name="closed" value="true" />
+      <created>1757946751334</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1757946751334</updated>
+    </task>
+    <task id="LOCAL-00031" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
+      <option name="closed" value="true" />
+      <created>1757947002650</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1757947002650</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -311,6 +325,7 @@
     <MESSAGE value="Добавлен артефакт а buildozer.spec" />
     <MESSAGE value="Изменен buildozer.spec" />
     <MESSAGE value="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer" />
-    <option name="LAST_COMMIT_MESSAGE" value="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer" />
+    <MESSAGE value="workflow для GitHub Actions, Python-for-Android (p4a)" />
+    <option name="LAST_COMMIT_MESSAGE" value="workflow для GitHub Actions, Python-for-Android (p4a)" />
   </component>
 </project>
