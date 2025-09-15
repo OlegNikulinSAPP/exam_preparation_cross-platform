@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка" />
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -394,7 +397,23 @@
       <option name="project" value="LOCAL" />
       <updated>1757964386851</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757964789733</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1757964789733</updated>
+    </task>
+    <task id="LOCAL-00043" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757965332223</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1757965332223</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

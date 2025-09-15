@@ -36,7 +36,8 @@ jobs:
 
       - name: Install Python-for-Android and Cython
         run: |
-          pip install --upgrade python-for-android
+          # Используем конкретную версию python-for-android вместо последней
+          pip install python-for-android==2023.10.6
           pip install cython==0.29.33
 
       - name: Set up Android SDK and NDK
@@ -79,50 +80,11 @@ jobs:
           find "$ANDROID_NDK_HOME" -name "*.py" -exec grep -l "print [^']" {} \; | xargs rm -f || true
           find "$ANDROID_NDK_HOME" -name "*.py" -exec grep -l "print '" {} \; | xargs rm -f || true
 
-      - name: Create custom recipes
-        run: |
-          mkdir -p recipes/pyjnius
-          cat > recipes/pyjnius/__init__.py << EOF
-          from pythonforandroid.recipes.pyjnius import PyjniusRecipe
-
-          class PyJniusRecipe(PyjniusRecipe):
-            version = 'master'
-            url = 'https://github.com/kivy/pyjnius/archive/master.zip'
-
-          recipe = PyJniusRecipe()
-          EOF
-
-          mkdir -p recipes/kivy
-          cat > recipes/kivy/__init__.py << EOF
-          from pythonforandroid.recipes.kivy import KivyRecipe
-          import os
-          import shutil
-
-          class KivyRecipeFixed(KivyRecipe):
-            # Используем более новую версию Kivy, совместимую с NDK 25
-            version = '2.3.0'
-            url = 'https://github.com/kivy/kivy/archive/refs/tags/2.3.0.zip'
-
-            def prebuild_arch(self, arch):
-                super().prebuild_arch(arch)
-                # Удаляем проблемные C++ файлы, которые не нужны для Android
-                build_dir = self.get_build_dir(arch.arch)
-                problematic_files = [
-                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.pyx'),
-                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.pxd'),
-                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.cpp')
-                ]
-                
-                for file_path in problematic_files:
-                    if os.path.exists(file_path):
-                        print(f"Removing problematic file: {file_path}")
-                        os.remove(file_path)
-
-          recipe = KivyRecipeFixed()
-          EOF
-
       - name: Build with Python-for-Android
         run: |
+          # Создаем пустой каталог для рецептов, чтобы избежать ошибок
+          mkdir -p empty_recipes
+          
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
@@ -136,8 +98,8 @@ jobs:
             --orientation=portrait \
             --window \
             --permission=INTERNET \
-            --local-recipes=recipes \
-            --ndk-api=21
+            --ndk-api=21 \
+            --ignore-setup-py  # Игнорируем setup.py чтобы избежать ошибок
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
