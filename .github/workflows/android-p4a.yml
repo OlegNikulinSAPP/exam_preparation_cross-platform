@@ -71,7 +71,7 @@ jobs:
           sdkmanager "platforms;android-33"
           sdkmanager "build-tools;33.0.0"
           sdkmanager "platform-tools"
-          sdkmanager "cmake;3.22.1"  # Добавляем CMake
+          sdkmanager "cmake;3.22.1"
 
       - name: Remove problematic Python 2 scripts from NDK
         run: |
@@ -122,17 +122,6 @@ jobs:
 
       - name: Build with Python-for-Android
         run: |
-          # Создаем минимальный setup.py для правильной сборки
-          cat > setup.py << EOF
-          from setuptools import setup
-
-          setup(
-              name="examapp",
-              version="0.1",
-              packages=[],
-          )
-          EOF
-
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
