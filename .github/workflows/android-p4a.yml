@@ -87,8 +87,8 @@ jobs:
           mkdir -p recipes/kivy
           cat > recipes/kivy/__init__.py << EOF
           from pythonforandroid.recipes.kivy import KivyRecipe
+          import os
           import shutil
-          from pathlib import Path
 
           class KivyRecipeFixed(KivyRecipe):
             version = '2.2.1'  # Используем стабильную версию вместо master
@@ -99,15 +99,15 @@ jobs:
                 # Удаляем проблемные C++ файлы, которые не нужны для Android
                 build_dir = self.get_build_dir(arch.arch)
                 problematic_files = [
-                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.pyx',
-                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.pxd',
-                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.cpp'
+                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.pyx'),
+                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.pxd'),
+                    os.path.join(build_dir, 'kivy', 'graphics', 'egl_backend', 'egl_angle_metal.cpp')
                 ]
                 
                 for file_path in problematic_files:
-                    if file_path.exists():
+                    if os.path.exists(file_path):
                         print(f"Removing problematic file: {file_path}")
-                        file_path.unlink()
+                        os.remove(file_path)
 
           recipe = KivyRecipeFixed()
           EOF
