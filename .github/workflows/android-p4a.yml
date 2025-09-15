@@ -50,11 +50,11 @@ jobs:
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
           rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
 
-          # Используем более стабильную версию NDK
-          wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
-          unzip -q android-ndk-r21e-linux-x86_64.zip
-          mv android-ndk-r21e/* android-ndk/
-          rm -rf android-ndk-r21e android-ndk-r21e-linux-x86_64.zip
+          # Используем рекомендуемую версию NDK 25b
+          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip -q android-ndk-r25b-linux.zip
+          mv android-ndk-r25b/* android-ndk/
+          rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
 
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
@@ -99,8 +99,9 @@ jobs:
           import shutil
 
           class KivyRecipeFixed(KivyRecipe):
-            version = '2.2.1'  # Используем стабильную версию вместо master
-            url = 'https://github.com/kivy/kivy/archive/refs/tags/2.2.1.zip'
+            # Используем более новую версию Kivy, совместимую с NDK 25
+            version = '2.3.0'
+            url = 'https://github.com/kivy/kivy/archive/refs/tags/2.3.0.zip'
 
             def prebuild_arch(self, arch):
                 super().prebuild_arch(arch)
