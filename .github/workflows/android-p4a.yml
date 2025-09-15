@@ -32,12 +32,12 @@ jobs:
             gettext \
             autopoint \
             libltdl-dev \
-            ccache  # Добавлен ccache для оптимизации сборки
+            ccache
 
       - name: Install Python-for-Android and Cython
         run: |
           pip install python-for-android
-          pip install cython==0.29.33  # Фиксируем версию Cython
+          pip install cython==0.29.33
 
       - name: Set up Android SDK and NDK
         run: |
@@ -87,10 +87,27 @@ jobs:
           mkdir -p recipes/kivy
           cat > recipes/kivy/__init__.py << EOF
           from pythonforandroid.recipes.kivy import KivyRecipe
+          import shutil
+          from pathlib import Path
 
           class KivyRecipeFixed(KivyRecipe):
-            version = 'master'  # Используем master вместо 2.3.0
-            url = 'https://github.com/kivy/kivy/archive/master.zip'
+            version = '2.2.1'  # Используем стабильную версию вместо master
+            url = 'https://github.com/kivy/kivy/archive/refs/tags/2.2.1.zip'
+
+            def prebuild_arch(self, arch):
+                super().prebuild_arch(arch)
+                # Удаляем проблемные C++ файлы, которые не нужны для Android
+                build_dir = self.get_build_dir(arch.arch)
+                problematic_files = [
+                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.pyx',
+                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.pxd',
+                    build_dir / 'kivy' / 'graphics' / 'egl_backend' / 'egl_angle_metal.cpp'
+                ]
+                
+                for file_path in problematic_files:
+                    if file_path.exists():
+                        print(f"Removing problematic file: {file_path}")
+                        file_path.unlink()
 
           recipe = KivyRecipeFixed()
           EOF
@@ -112,7 +129,7 @@ jobs:
             --permission=INTERNET \
             --ignore-setup-py \
             --local-recipes=recipes \
-            --ndk-api=21  # Явно устанавливаем NDK API level
+            --ndk-api=21
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
