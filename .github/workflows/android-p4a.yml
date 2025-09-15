@@ -27,15 +27,16 @@ jobs:
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
-            libtinfo5 \
+            libtinfo6 \  # Заменяем libtinfo5 на libtinfo6
             cmake \
             libffi-dev \
             libssl-dev \
-            cython
+            cython3  # Заменяем cython на cython3
 
-      - name: Install Python-for-Android
+      - name: Install Python-for-Android and Cython
         run: |
           pip install python-for-android
+          pip install cython  # Устанавливаем Cython через pip
 
       - name: Set up Android SDK and NDK
         run: |
