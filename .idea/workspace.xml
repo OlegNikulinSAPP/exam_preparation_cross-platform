@@ -66,14 +66,6 @@
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
     </task>
-    <task id="LOCAL-00001" summary="First commit">
-      <option name="closed" value="true" />
-      <created>1757785137345</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1757785137346</updated>
-    </task>
     <task id="LOCAL-00002" summary="First commit">
       <option name="closed" value="true" />
       <created>1757853626770</created>
@@ -458,7 +450,15 @@
       <option name="project" value="LOCAL" />
       <updated>1757968334571</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757968697327</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1757968697328</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

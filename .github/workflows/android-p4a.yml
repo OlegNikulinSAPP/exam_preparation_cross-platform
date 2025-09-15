@@ -36,20 +36,23 @@ jobs:
 
       - name: Install Python-for-Android and Cython
         run: |
-          pip install python-for-android==2022.9.4
-          pip install cython==0.29.21
+          # Используем более новую версию python-for-android
+          pip install python-for-android==2023.9.16
+          pip install cython==0.29.33
 
       - name: Set up Android SDK and NDK
         run: |
           mkdir -p android-sdk
           mkdir -p android-ndk
 
+          # Скачиваем Android Command Line Tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip -q commandlinetools-linux-8512546_latest.zip
           mkdir -p android-sdk/cmdline-tools/latest
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
           rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
 
+          # Используем NDK r21e
           wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
           unzip -q android-ndk-r21e-linux-x86_64.zip
           mv android-ndk-r21e/* android-ndk/
@@ -67,22 +70,27 @@ jobs:
 
       - name: Install Android platform and build-tools
         run: |
-          sdkmanager "platforms;android-28"
-          sdkmanager "build-tools;28.0.3"
+          # Устанавливаем необходимые компоненты
+          sdkmanager "platforms;android-33"
+          sdkmanager "build-tools;33.0.0"
           sdkmanager "platform-tools"
+          sdkmanager "cmake;3.22.1"
+          sdkmanager "patcher;v4"  # Добавляем patcher
 
       - name: Build with Python-for-Android
         run: |
+          # Создаем простой main.py если его нет
           if [ ! -f main.py ]; then
             echo "print('Hello from Exam App')" > main.py
           fi
 
+          # Используем более новый API
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
-            --requirements=python3,kivy==2.0.0 \
+            --requirements=python3,kivy==2.2.1 \
             --arch=arm64-v8a \
-            --android-api=28 \
+            --android-api=33 \
             --private=. \
             --package=org.exam.examapp \
             --name="Exam App" \
