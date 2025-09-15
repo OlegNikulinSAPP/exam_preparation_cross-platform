@@ -55,14 +55,6 @@ jobs:
           mv android-ndk-r25b/* android-ndk/
           rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
 
-          # Исправляем проблемный Python 2 скрипт в NDK
-          problem_script="$GITHUB_WORKSPACE/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/share/clang/run-find-all-symbols.py"
-          if [ -f "$problem_script" ]; then
-            echo "Fixing Python 2 script: $problem_script"
-            # Удаляем проблемный скрипт или заменяем его заглушкой
-            rm -f "$problem_script"
-          fi
-
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
           echo "PATH=$GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/bin:$GITHUB_WORKSPACE/android-ndk:$PATH" >> $GITHUB_ENV
@@ -122,13 +114,6 @@ jobs:
 
       - name: Build with Python-for-Android
         run: |
-          # Дополнительно проверяем и удаляем проблемный скрипт перед сборкой
-          problem_script="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/share/clang/run-find-all-symbols.py"
-          if [ -f "$problem_script" ]; then
-            echo "Removing problematic Python 2 script: $problem_script"
-            rm -f "$problem_script"
-          fi
-
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
@@ -144,7 +129,8 @@ jobs:
             --permission=INTERNET \
             --ignore-setup-py \
             --local-recipes=recipes \
-            --ndk-api=21
+            --ndk-api=21 \
+            --no-compile-python  # Отключаем компиляцию Python файлов
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
