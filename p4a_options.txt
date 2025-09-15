@@ -1,0 +1,13 @@
+--dist_name=examapp
+--bootstrap=sdl2
+--requirements=python3,kivy
+--arch=arm64-v8a
+--arch=armeabi-v7a
+--android-api=21
+--private=.
+--package=org.exam.examapp
+--name="Exam App"
+--version=0.1
+--orientation=portrait
+--window
+--permission=INTERNET

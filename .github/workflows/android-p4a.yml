@@ -1,0 +1,98 @@
+name: Build Android APK with Python-for-Android
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            openjdk-8-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            cython
+
+      - name: Install Python-for-Android
+        run: |
+          pip install python-for-android
+
+      - name: Set up Android SDK and NDK
+        run: |
+          # Create directories for Android SDK and NDK
+          mkdir -p android-sdk
+          mkdir -p android-ndk
+
+          # Download and extract Android Command Line Tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip -q commandlinetools-linux-8512546_latest.zip
+          mkdir -p android-sdk/cmdline-tools/latest
+          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+          rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
+
+          # Download and extract Android NDK
+          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip -q android-ndk-r25b-linux.zip
+          mv android-ndk-r25b/* android-ndk/
+          rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
+
+          # Set environment variables
+          echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
+          echo "PATH=$GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses
+
+      - name: Install Android platform and build-tools
+        run: |
+          sdkmanager "platforms;android-30"
+          sdkmanager "build-tools;30.0.3"
+          sdkmanager "platform-tools"
+
+      - name: Build with Python-for-Android
+        run: |
+          # Build the APK
+          p4a apk \
+            --dist_name=examapp \
+            --bootstrap=sdl2 \
+            --requirements=python3,kivy \
+            --arch=arm64-v8a \
+            --arch=armeabi-v7a \
+            --android-api=21 \
+            --private=. \
+            --package=org.exam.examapp \
+            --name="Exam App" \
+            --version=0.1 \
+            --orientation=portrait \
+            --window \
+            --permission=INTERNET
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apk
+          path: dist/*.apk
