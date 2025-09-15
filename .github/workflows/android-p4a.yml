@@ -31,12 +31,13 @@ jobs:
             libssl-dev \
             gettext \
             autopoint \
-            libltdl-dev
+            libltdl-dev \
+            ccache  # Добавлен ccache для оптимизации сборки
 
       - name: Install Python-for-Android and Cython
         run: |
           pip install python-for-android
-          pip install cython
+          pip install cython==0.29.33  # Фиксируем версию Cython
 
       - name: Set up Android SDK and NDK
         run: |
@@ -56,7 +57,7 @@ jobs:
 
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
-          echo "PATH=$GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$GITHUB_WORKSPACE/android-sdk/cmdline-tools/latest/bin:$GITHUB_WORKSPACE/android-ndk:$PATH" >> $GITHUB_ENV
 
       - name: Accept Android SDK licenses
         run: |
@@ -70,7 +71,7 @@ jobs:
           sdkmanager "build-tools;33.0.0"
           sdkmanager "platform-tools"
 
-      - name: Create custom recipe for pyjnius
+      - name: Create custom recipes
         run: |
           mkdir -p recipes/pyjnius
           cat > recipes/pyjnius/__init__.py << EOF
@@ -81,6 +82,17 @@ jobs:
             url = 'https://github.com/kivy/pyjnius/archive/master.zip'
 
           recipe = PyJniusRecipe()
+          EOF
+
+          mkdir -p recipes/kivy
+          cat > recipes/kivy/__init__.py << EOF
+          from pythonforandroid.recipes.kivy import KivyRecipe
+
+          class KivyRecipeFixed(KivyRecipe):
+            version = 'master'  # Используем master вместо 2.3.0
+            url = 'https://github.com/kivy/kivy/archive/master.zip'
+
+          recipe = KivyRecipeFixed()
           EOF
 
       - name: Build with Python-for-Android
@@ -99,7 +111,8 @@ jobs:
             --window \
             --permission=INTERNET \
             --ignore-setup-py \
-            --local-recipes=recipes
+            --local-recipes=recipes \
+            --ndk-api=21  # Явно устанавливаем NDK API level
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
