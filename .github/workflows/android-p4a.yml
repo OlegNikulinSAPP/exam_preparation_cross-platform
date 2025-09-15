@@ -81,7 +81,7 @@ jobs:
               url = 'https://github.com/kivy/pyjnius/archive/master.zip'
 
           recipe = PyJniusRecipe()
-EOF
+          EOF
 
       - name: Build with Python-for-Android
         run: |
