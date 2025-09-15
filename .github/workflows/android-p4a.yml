@@ -11,7 +11,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'  # Используем Python 3.8 для лучшей совместимости
+          python-version: '3.8'
 
       - name: Install essential system dependencies
         run: |
@@ -36,26 +36,24 @@ jobs:
 
       - name: Install Python-for-Android and Cython
         run: |
-          pip install python-for-android==2020.3.30  # Стабильная версия
-          pip install cython==0.29.21  # Совместимая версия Cython
+          pip install python-for-android==2022.9.4
+          pip install cython==0.29.21
 
       - name: Set up Android SDK and NDK
         run: |
           mkdir -p android-sdk
           mkdir -p android-ndk
 
-          # Скачиваем Android Command Line Tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
-          unzip -q commandlinetools-linux-6200805_latest.zip
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip -q commandlinetools-linux-8512546_latest.zip
           mkdir -p android-sdk/cmdline-tools/latest
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
-          rm -rf cmdline-tools commandlinetools-linux-6200805_latest.zip
+          rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
 
-          # Используем NDK r19c для лучшей совместимости с python-for-android
-          wget -q https://dl.google.com/android/repository/android-ndk-r19c-linux-x86_64.zip
-          unzip -q android-ndk-r19c-linux-x86_64.zip
-          mv android-ndk-r19c/* android-ndk/
-          rm -rf android-ndk-r19c android-ndk-r19c-linux-x86_64.zip
+          wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+          unzip -q android-ndk-r21e-linux-x86_64.zip
+          mv android-ndk-r21e/* android-ndk/
+          rm -rf android-ndk-r21e android-ndk-r21e-linux-x86_64.zip
 
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
@@ -69,13 +67,12 @@ jobs:
 
       - name: Install Android platform and build-tools
         run: |
-          sdkmanager "platforms;android-28"  # Android 9.0 (Pie)
+          sdkmanager "platforms;android-28"
           sdkmanager "build-tools;28.0.3"
           sdkmanager "platform-tools"
 
       - name: Build with Python-for-Android
         run: |
-          # Создаем простой main.py если его нет
           if [ ! -f main.py ]; then
             echo "print('Hello from Exam App')" > main.py
           fi
@@ -83,7 +80,7 @@ jobs:
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
-            --requirements=python3,kivy==2.0.0 \  # Стабильная версия Kivy
+            --requirements=python3,kivy==2.0.0 \
             --arch=arm64-v8a \
             --android-api=28 \
             --private=. \

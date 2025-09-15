@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" afterDir="false" />
-    </list>
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -428,7 +426,39 @@
       <option name="project" value="LOCAL" />
       <updated>1757966570713</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757967805315</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1757967805315</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757967858528</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1757967858528</updated>
+    </task>
+    <task id="LOCAL-00048" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757968039146</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1757968039146</updated>
+    </task>
+    <task id="LOCAL-00049" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757968334571</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1757968334571</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
