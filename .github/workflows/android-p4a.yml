@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Python-for-Android and Cython
         run: |
-          pip install python-for-android
+          pip install --upgrade python-for-android
           pip install cython==0.29.33
 
       - name: Set up Android SDK and NDK
@@ -50,10 +50,11 @@ jobs:
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
           rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
 
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip -q android-ndk-r25b-linux.zip
-          mv android-ndk-r25b/* android-ndk/
-          rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
+          # Используем более стабильную версию NDK
+          wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+          unzip -q android-ndk-r21e-linux-x86_64.zip
+          mv android-ndk-r21e/* android-ndk/
+          rm -rf android-ndk-r21e android-ndk-r21e-linux-x86_64.zip
 
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk" >> $GITHUB_ENV
@@ -70,6 +71,7 @@ jobs:
           sdkmanager "platforms;android-33"
           sdkmanager "build-tools;33.0.0"
           sdkmanager "platform-tools"
+          sdkmanager "cmake;3.22.1"  # Добавляем CMake
 
       - name: Remove problematic Python 2 scripts from NDK
         run: |
@@ -120,6 +122,17 @@ jobs:
 
       - name: Build with Python-for-Android
         run: |
+          # Создаем минимальный setup.py для правильной сборки
+          cat > setup.py << EOF
+          from setuptools import setup
+
+          setup(
+              name="examapp",
+              version="0.1",
+              packages=[],
+          )
+          EOF
+
           p4a apk \
             --dist_name=examapp \
             --bootstrap=sdl2 \
@@ -133,7 +146,6 @@ jobs:
             --orientation=portrait \
             --window \
             --permission=INTERNET \
-            --ignore-setup-py \
             --local-recipes=recipes \
             --ndk-api=21
 
