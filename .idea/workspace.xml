@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Изменен buildozer.spec">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" afterDir="false" />
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка">
+      <change beforePath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -285,7 +286,15 @@
       <option name="project" value="LOCAL" />
       <updated>1757883453463</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="Новая сборка">
+      <option name="closed" value="true" />
+      <created>1757951078333</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1757951078333</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -294,6 +303,7 @@
     <MESSAGE value="Добавлен артефакт" />
     <MESSAGE value="Добавлен артефакт а buildozer.spec" />
     <MESSAGE value="Изменен buildozer.spec" />
-    <option name="LAST_COMMIT_MESSAGE" value="Изменен buildozer.spec" />
+    <MESSAGE value="Новая сборка" />
+    <option name="LAST_COMMIT_MESSAGE" value="Новая сборка" />
   </component>
 </project>

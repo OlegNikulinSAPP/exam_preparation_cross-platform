@@ -30,11 +30,12 @@ jobs:
             libffi-dev \
             libssl-dev \
             gettext \
-            autopoint
+            autopoint \
+            libltdl-dev  # Добавьте эту зависимость
 
       - name: Install Python-for-Android and Cython
         run: |
-          pip install python-for-android
+          pip install --upgrade python-for-android
           pip install cython
 
       - name: Set up Android SDK and NDK
@@ -50,11 +51,11 @@ jobs:
           mv cmdline-tools/* android-sdk/cmdline-tools/latest/
           rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
 
-          # Download and extract Android NDK r26b
-          wget -q https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
-          unzip -q android-ndk-r26b-linux.zip
-          mv android-ndk-r26b/* android-ndk/
-          rm -rf android-ndk-r26b android-ndk-r26b-linux.zip
+          # Download and extract Android NDK r25b (вместо r26b)
+          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip -q android-ndk-r25b-linux.zip
+          mv android-ndk-r25b/* android-ndk/
+          rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
 
           # Set environment variables
           echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
