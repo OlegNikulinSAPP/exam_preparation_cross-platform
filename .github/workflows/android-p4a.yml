@@ -8,6 +8,196 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create buildozer.spec if not exists
+        run: |
+          if [ ! -f buildozer.spec ]; then
+            echo "[app]
+
+# (str) Title of your application
+title = Exam App
+
+# (str) Package name
+package.name = examapp
+
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.exam
+
+# (str) Source code where the main.py live
+source.dir = .
+
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas
+
+# (list) List of inclusions using pattern matching
+#source.include_patterns = assets/*,images/*.png
+
+# (list) Source files to exclude (let empty to not exclude anything)
+#source.exclude_exts = spec
+
+# (list) List of directory to exclude (let empty to not exclude anything)
+#source.exclude_dirs = tests, bin
+
+# (list) List of exclusions using pattern matching
+#source.exclude_patterns = license,images/*/*.jpg
+
+# (str) Application versioning (method 1)
+version = 0.1
+
+# (str) Application versioning (method 2)
+# version.regex = __version__ = ['\"](.*)['\"]
+# version.filename = %(source.dir)s/main.py
+
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = python3,kivy
+
+# (str) Custom source folders for requirements
+# Sets custom source for any requirements with recipes
+# requirements.source.kivy = ../../kivy
+
+# (list) Garden requirements
+#garden_requirements =
+
+# (str) Presplash of the application
+#presplash.filename = %(source.dir)s/data/presplash.png
+
+# (str) Icon of the application
+#icon.filename = %(source.dir)s/data/icon.png
+
+# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
+orientation = portrait
+
+# (list) List of service to declare
+#services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
+
+#
+# OSX Specific
+#
+
+#
+# author = © Copyright Info
+
+#
+# Android specific
+#
+
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
+
+# (string) Presplash background color (for new android toolchain)
+# Supported formats are: #RRGGBB #AARRGGBB or one of the following names:
+# red, blue, green, black, white, gray, cyan, magenta, yellow, lightgray,
+# darkgray, grey, lightgrey, darkgrey, aqua, fuchsia, lime, maroon, navy,
+# olive, purple, silver, teal.
+#android.presplash_color = #FFFFFF
+
+# (list) Permissions
+android.permissions = INTERNET
+
+# (int) Target Android API, should be as high as possible.
+android.api = 33
+
+# (int) Minimum API your APK will support.
+#android.minapi = 21
+
+# (int) Android SDK version to use
+#android.sdk = 20
+
+# (str) Android NDK version to use
+android.ndk = 25b
+
+# (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
+#android.ndk_api = 21
+
+# (bool) Use --private data storage (True) or --dir public storage (False)
+#android.private_storage = True
+
+# (str) Android NDK directory (if empty, it will be automatically downloaded.)
+#android.ndk_path =
+
+# (str) Android SDK directory (if empty, it will be automatically downloaded.)
+#android.sdk_path =
+
+# (str) ANT directory (if empty, it will be automatically downloaded.)
+#android.ant_path =
+
+# (bool) If True, then skip trying to update the Android sdk
+# This can be useful to avoid excess Internet downloads or save time
+# when an update is due and you do not want to wait for it.
+#android.skip_update = False
+
+# (bool) If True, then automatically accept SDK license
+# agreements. This is intended for automation only. If set to False,
+# the default, you will be shown the license when first running
+# buildozer.
+#android.accept_sdk_license = False
+
+# (str) Android entry point, default is ok for Kivy-based app
+#android.entrypoint = org.renpy.android.PythonActivity
+
+# (str) Android app theme, default is ok for Kivy-based app
+#android.theme = '@android:style/Theme.NoTitleBar'
+
+# (list) Pattern to whitelist for the whole project
+#android.whitelist =
+
+# (str) Path to a custom whitelist file
+#android.whitelist_src =
+
+# (str) Path to a custom blacklist file
+#android.blacklist_src =
+
+# (list) List of Java .jar files to add to the libs so that pyjnius can access
+# their classes. Don't add jars that you do not need, since extra jars can slow
+# down the build process. This allows to add the jar files located in the
+# 'bin' folder.
+#android.add_jars = foo.jar,bar.jar
+
+# (list) List of Java files to add to the android project (can be java or a
+# containing folder, the folder will be added recursively). This allows to add
+# custom java classes. Don't add files that you do not need, since extra files
+# can slow down the build process. The files will be added to the 'src' folder.
+#android.add_src =
+
+# (list) List of Java .jar files to add to the libs, to allow them to be
+# preloaded. This can be needed for some methods to work, like
+# Google Maps. This allows to add the jar files located in the 'bin'
+# folder.
+#android.add_preloaded_jars = foo.jar,bar.jar
+
+# (list) List of patterns of files to exclude from the APK. This can be used to
+# exclude any files that are not needed for the app. The pattern must be a
+# relative path from the source directory.
+#android.exclude_patterns = tests/, .git/
+
+#
+# iOS specific
+#
+
+# (str) Name of the certificate to use for signing the debug version
+# Get a list of available identities: buildozer ios list_identities
+#ios.codesign.debug = \"iPhone Developer: <lastname> <firstname> (<hexstring>)\"
+
+# (str) Name of the certificate to use for signing the release version
+# Get a list of available identities: buildozer ios list_identities
+#ios.codesign.release = %(ios.codesign.debug)s
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+log_level = 2
+
+# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+warn_on_root = 1
+
+# (str) Path to build artifact storage, absolute or relative to spec file
+# buildozer.build_dir = .buildozer
+
+# (str) Path to build output (apk, ipa, etc.) storage, absolute or relative to spec file
+# buildozer.bin_dir = bin
+" > buildozer.spec
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -21,23 +211,10 @@ jobs:
 
       - name: Build using Ubuntu Docker image
         run: |
-          # Создаем простой main.py если его нет
-          if [ ! -f main.py ]; then
-            echo "from kivy.app import App
-          from kivy.uix.label import Label
-          
-          class ExamApp(App):
-              def build(self):
-                  return Label(text='Hello from Exam App')
-          
-          if __name__ == '__main__':
-              ExamApp().run()" > main.py
-                    fi
-
           # Запускаем сборку в Ubuntu 20.04 контейнере
           docker run --rm \
             -v $PWD:/src \
-            -v $PWD/.buildozer:/home/user/.buildozer \
+            -v $PWD/.buildozer:/root/.buildozer \
             ubuntu:20.04 \
             bash -c "
             # Устанавливаем переменные окружения для автоматической конфигурации tzdata
@@ -45,17 +222,13 @@ jobs:
             export TZ=Europe/Moscow
 
             # Настройка локали для избежания предупреждений
-            apt-get update && apt-get install -y locales tzdata sudo
+            apt-get update && apt-get install -y locales tzdata
             ln -fs /usr/share/zoneinfo/\$TZ /etc/localtime
             dpkg-reconfigure --frontend noninteractive tzdata
             locale-gen en_US.UTF-8
             export LANG=en_US.UTF-8
             export LANGUAGE=en_US:en
             export LC_ALL=en_US.UTF-8
-
-            # Создаем обычного пользователя
-            useradd -m -s /bin/bash user
-            chown -R user:user /src
 
             # Установка зависимостей
             apt-get update && apt-get install -y \
@@ -81,32 +254,15 @@ jobs:
                 python3-setuptools \
                 wget
 
-            # Установка Buildozer для пользователя
-            sudo -u user pip3 install --user --upgrade pip
-            sudo -u user pip3 install --user buildozer cython
+            # Установка Buildozer
+            pip3 install --upgrade pip
+            pip3 install buildozer cython
 
-            # Добавляем путь к локальным бинарникам пользователя в PATH
-            echo 'export PATH=\$PATH:/home/user/.local/bin' >> /home/user/.bashrc
-
-            # Переходим в директорию проекта и запускаем сборку от имени пользователя
-            sudo -u user bash -c '
-            source ~/.bashrc
+            # Переходим в директорию проекта и запускаем сборку
             cd /src
-            if [ ! -f buildozer.spec ]; then
-                buildozer init
-                sed -i \"s/^title = .*/title = Exam App/\" buildozer.spec
-                sed -i \"s/^package.name = .*/package.name = examapp/\" buildozer.spec
-                sed -i \"s/^package.domain = .*/package.domain = org.exam/\" buildozer.spec
-                sed -i \"s/^orientation = .*/orientation = portrait/\" buildozer.spec
-                sed -i \"s/^android.api = .*/android.api = 33/\" buildozer.spec
-                sed -i \"s/^android.ndk = .*/android.ndk = 25b/\" buildozer.spec
-                sed -i \"s/^android.permissions = .*/android.permissions = INTERNET/\" buildozer.spec
-                sed -i \"s/^requirements = .*/requirements = python3,kivy/\" buildozer.spec
-            fi
             
             # Запускаем сборку
             buildozer android debug
-            '
             "
 
       - name: Upload APK
