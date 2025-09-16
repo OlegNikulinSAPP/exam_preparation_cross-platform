@@ -45,7 +45,32 @@ jobs:
             dpkg-reconfigure --frontend noninteractive tzdata
 
             # Установка зависимостей
-            apt-get update && apt-get install -y ...
+            apt-get update && apt-get install -y \
+              software-properties-common \
+              git \
+              zip \
+              unzip \
+              openjdk-8-jdk \
+              autoconf \
+              automake \
+              libtool \
+              pkg-config \
+              zlib1g-dev \
+              cmake \
+              libffi-dev \
+              libssl-dev \
+              gettext \
+              autopoint \
+              libltdl-dev \
+              ccache \
+              python3 \
+              python3-pip \
+              python3-setuptools \
+              wget
+
+            # Устраняем конфликты пакетов
+            # Если пакет не нужен, комментируем его
+            # apt-get install -y zfsutils-linux zutils zephyr-server-krb5
 
             # Установка Buildozer
             pip3 install --upgrade pip
