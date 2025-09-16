@@ -37,7 +37,7 @@ jobs:
           # Запускаем сборку в Ubuntu 20.04 контейнере
           docker run --rm \
             -v $PWD:/src \
-            -v $PWD/.buildozer:/root/.buildozer \
+            -v $PWD/.buildozer:/home/user/.buildozer \
             ubuntu:20.04 \
             bash -c "
             # Устанавливаем переменные окружения для автоматической конфигурации tzdata
@@ -45,13 +45,17 @@ jobs:
             export TZ=Europe/Moscow
 
             # Настройка локали для избежания предупреждений
-            apt-get update && apt-get install -y locales tzdata
+            apt-get update && apt-get install -y locales tzdata sudo
             ln -fs /usr/share/zoneinfo/\$TZ /etc/localtime
             dpkg-reconfigure --frontend noninteractive tzdata
             locale-gen en_US.UTF-8
             export LANG=en_US.UTF-8
             export LANGUAGE=en_US:en
             export LC_ALL=en_US.UTF-8
+
+            # Создаем обычного пользователя
+            useradd -m -s /bin/bash user
+            chown -R user:user /src
 
             # Установка зависимостей
             apt-get update && apt-get install -y \
@@ -77,6 +81,8 @@ jobs:
                 python3-setuptools \
                 wget
 
+            # Переключаемся на обычного пользователя
+            su - user -c '
             # Установка Buildozer
             pip3 install --upgrade pip
             pip3 install buildozer cython
@@ -85,18 +91,19 @@ jobs:
             cd /src
             if [ ! -f buildozer.spec ]; then
                 buildozer init
-                sed -i 's/^title = .*/title = Exam App/' buildozer.spec
-                sed -i 's/^package.name = .*/package.name = examapp/' buildozer.spec
-                sed -i 's/^package.domain = .*/package.domain = org.exam/' buildozer.spec
-                sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec
-                sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec
-                sed -i 's/^android.ndk = .*/android.ndk = 25b/' buildozer.spec
-                sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
-                sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
+                sed -i \"s/^title = .*/title = Exam App/\" buildozer.spec
+                sed -i \"s/^package.name = .*/package.name = examapp/\" buildozer.spec
+                sed -i \"s/^package.domain = .*/package.domain = org.exam/\" buildozer.spec
+                sed -i \"s/^orientation = .*/orientation = portrait/\" buildozer.spec
+                sed -i \"s/^android.api = .*/android.api = 33/\" buildozer.spec
+                sed -i \"s/^android.ndk = .*/android.ndk = 25b/\" buildozer.spec
+                sed -i \"s/^android.permissions = .*/android.permissions = INTERNET/\" buildozer.spec
+                sed -i \"s/^requirements = .*/requirements = python3,kivy/\" buildozer.spec
             fi
             
             # Запускаем сборку
             buildozer android debug
+            '
             "
 
       - name: Upload APK
