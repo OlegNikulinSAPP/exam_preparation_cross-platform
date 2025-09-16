@@ -69,22 +69,6 @@
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
     </task>
-    <task id="LOCAL-00011" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757877859439</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1757877859439</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757878136011</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1757878136011</updated>
-    </task>
     <task id="LOCAL-00013" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
       <created>1757878446626</created>
@@ -461,7 +445,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758022979360</updated>
     </task>
-    <option name="localTasksCounter" value="60" />
+    <task id="LOCAL-00060" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023162452</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023162452</updated>
+    </task>
+    <task id="LOCAL-00061" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023332161</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023332161</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
