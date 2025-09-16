@@ -43,9 +43,9 @@ jobs:
           # Установка необходимых компонентов
           "$ANDROID_HOME"/tools/bin/sdkmanager --sdk_root="$ANDROID_HOME" --install "build-tools;30.0.3" "platforms;android-30" "platform-tools"
 
-      - name: Install dependencies
+      - name: Install minimal dependencies
         run: |
-          # Установка зависимостей
+          # Установка минимального набора зависимостей
           sudo apt-get update && sudo apt-get install -y ...
 
           # Установка Python 3 и pip
