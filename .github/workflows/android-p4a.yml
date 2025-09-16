@@ -1,4 +1,4 @@
-name: Build Android APK with Buildozer
+name: Build Android APK with Kivy Docker
 
 on: [push, workflow_dispatch]
 
@@ -8,73 +8,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Install essential system dependencies
+      - name: Build using Kivy Docker image
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            openjdk-8-jdk \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            gettext \
-            autopoint \
-            libltdl-dev \
-            ccache \
-            python3-pip \
-            python3-setuptools
-
-      - name: Install Buildozer
-        run: |
-          pip install buildozer
-
-      - name: Set up Android SDK and NDK
-        run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk
-          mkdir -p ~/.buildozer/android/platform/android-ndk
-
-          # Download Android SDK
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip -q commandlinetools-linux-8512546_latest.zip
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/
-          rm -rf cmdline-tools commandlinetools-linux-8512546_latest.zip
-
-          # Download Android NDK
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip -q android-ndk-r25b-linux.zip
-          mv android-ndk-r25b/* ~/.buildozer/android/platform/android-ndk/
-          rm -rf android-ndk-r25b android-ndk-r25b-linux.zip
-
-      - name: Create buildozer.spec if not exists
-        run: |
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-            # Update buildozer.spec with our settings
-            sed -i 's/^title = .*/title = Exam App/' buildozer.spec
-            sed -i 's/^package.name = .*/package.name = examapp/' buildozer.spec
-            sed -i 's/^package.domain = .*/package.domain = org.exam/' buildozer.spec
-            sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec
-            sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec
-            sed -i 's/^android.ndk = .*/android.ndk = 25b/' buildozer.spec
-            sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
+          # Создаем простой main.py если его нет
+          if [ ! -f main.py ]; then
+            echo "print('Hello from Exam App')" > main.py
           fi
 
-      - name: Build APK with Buildozer
-        run: |
-          buildozer android debug
+          # Запускаем сборку в Docker контейнере с предустановленными инструментами
+          docker run --rm \
+            -v $PWD:/src \
+            -v $PWD/.buildozer:/home/user/.buildozer \
+            kivy/kivy:latest \
+            bash -c "
+            cd /src &&
+            apt-get update &&
+            apt-get install -y build-essential zip unzip openjdk-8-jdk &&
+            pip install buildozer &&
+            buildozer init &&
+            sed -i 's/^title = .*/title = Exam App/' buildozer.spec &&
+            sed -i 's/^package.name = .*/package.name = examapp/' buildozer.spec &&
+            sed -i 's/^package.domain = .*/package.domain = org.exam/' buildozer.spec &&
+            sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec &&
+            sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec &&
+            sed -i 's/^android.ndk = .*/android.ndk = 25b/' buildozer.spec &&
+            sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec &&
+            buildozer android debug
+            "
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
