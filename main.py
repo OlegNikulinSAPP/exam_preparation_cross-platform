@@ -1,4 +1,3 @@
-import kivy
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
@@ -10,15 +9,18 @@ from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
 from kivy.storage.jsonstore import JsonStore
-from kivy.uix.gridlayout import GridLayout
 from kivy.metrics import dp
-from kivy.clock import Clock
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import NumericProperty
+from kivy.utils import platform
+from kivy.config import Config
 import random
-import os
 
-# Устанавливаем размер окна для мобильных устройств
-Window.size = (400, 600) if hasattr(Window, 'size') else None
+# Настройки окна для разных платформ
+Config.set('graphics', 'resizable', '1')
+if platform in ('win', 'linux', 'macosx', 'unknown'):
+    Window.size = (400, 600)
+else:
+    Window.fullscreen = 'auto'
 
 
 # Кастомное текстовое поле с автоматическим изменением высоты
