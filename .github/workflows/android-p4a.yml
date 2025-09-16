@@ -25,7 +25,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildozer-
 
-      - name: Build using Ubuntu Docker image
+      - name: Build Android APK inside Docker container
         run: |
           # Запускаем сборку в Ubuntu 20.04 контейнере
           docker run --rm \
@@ -34,14 +34,35 @@ jobs:
             ubuntu:20.04 \
             bash -c "
             # Настройка локали
-            apt-get update && apt-get install -y locales tzdata
+            apt-get update && apt-get install -y locales
             locale-gen en_US.UTF-8
             export LANG=en_US.UTF-8
             export LANGUAGE=en_US:en
             export LC_ALL=en_US.UTF-8
 
-            # Установка зависимостей
-            apt-get update && apt-get install -y ...
+            # Установка необходимых зависимостей
+            apt-get update && apt-get install -y \
+              software-properties-common \
+              git \
+              zip \
+              unzip \
+              openjdk-8-jdk \
+              autoconf \
+              automake \
+              libtool \
+              pkg-config \
+              zlib1g-dev \
+              cmake \
+              libffi-dev \
+              libssl-dev \
+              gettext \
+              autopoint \
+              libltdl-dev \
+              ccache \
+              python3 \
+              python3-pip \
+              python3-setuptools \
+              wget
 
             # Установка Buildozer
             pip3 install --upgrade pip
