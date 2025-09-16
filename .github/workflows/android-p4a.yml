@@ -33,52 +33,23 @@ jobs:
             -v $PWD/.buildozer:/root/.buildozer \
             ubuntu:20.04 \
             bash -c "
-            # Устанавливаем переменные окружения для автоматической конфигурации tzdata
-            export DEBIAN_FRONTEND=noninteractive
-            export TZ=Europe/Moscow
-
-            # Настройка локали для избежания предупреждений
+            # Настройка локали
             apt-get update && apt-get install -y locales tzdata
-            ln -fs /usr/share/zoneinfo/\$TZ /etc/localtime
-            dpkg-reconfigure --frontend noninteractive tzdata
             locale-gen en_US.UTF-8
             export LANG=en_US.UTF-8
             export LANGUAGE=en_US:en
             export LC_ALL=en_US.UTF-8
 
             # Установка зависимостей
-            apt-get update && apt-get install -y \
-                software-properties-common \
-                git \
-                zip \
-                unzip \
-                openjdk-8-jdk \
-                autoconf \
-                automake \
-                libtool \
-                pkg-config \
-                zlib1g-dev \
-                cmake \
-                libffi-dev \
-                libssl-dev \
-                gettext \
-                autopoint \
-                libltdl-dev \
-                ccache \
-                python3 \
-                python3-pip \
-                python3-setuptools \
-                wget
+            apt-get update && apt-get install -y ...
 
             # Установка Buildozer
             pip3 install --upgrade pip
             pip3 install buildozer cython
 
-            # Переходим в директорию проекта и запускаем сборку
+            # Переход в рабочую директорию и запуск сборки
             cd /src
-            
-            # Запускаем сборку
-            buildozer android debug
+            buildozer --no-input android debug
             "
 
       - name: Upload APK
