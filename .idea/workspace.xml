@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Новая сборка" />
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,19 +41,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Locadm/PycharmProjects/exam_preparation_cross-platform&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.main.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/Locadm/PycharmProjects/exam_preparation_cross-platform"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-975db3bf15a3-31b6be0877a2-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.18034.82" />
+        <option value="bundled-python-sdk-c69650fc56ca-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.15619.17" />
       </set>
     </attachedChunks>
   </component>
@@ -65,6 +66,14 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
+    </task>
+    <task id="LOCAL-00001" summary="First commit">
+      <option name="closed" value="true" />
+      <created>1757785137345</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1757785137346</updated>
     </task>
     <task id="LOCAL-00002" summary="First commit">
       <option name="closed" value="true" />
@@ -274,191 +283,47 @@
       <option name="project" value="LOCAL" />
       <updated>1757883453463</updated>
     </task>
-    <task id="LOCAL-00028" summary="Новая сборка">
+    <task id="LOCAL-00028" summary="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer">
       <option name="closed" value="true" />
-      <created>1757951078333</created>
+      <created>1757944769824</created>
       <option name="number" value="00028" />
       <option name="presentableId" value="LOCAL-00028" />
       <option name="project" value="LOCAL" />
-      <updated>1757951078333</updated>
+      <updated>1757944769824</updated>
     </task>
-    <task id="LOCAL-00029" summary="Новая сборка">
+    <task id="LOCAL-00029" summary="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer">
       <option name="closed" value="true" />
-      <created>1757952578694</created>
+      <created>1757945446467</created>
       <option name="number" value="00029" />
       <option name="presentableId" value="LOCAL-00029" />
       <option name="project" value="LOCAL" />
-      <updated>1757952578694</updated>
+      <updated>1757945446467</updated>
     </task>
-    <task id="LOCAL-00030" summary="Новая сборка">
+    <task id="LOCAL-00030" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757953609174</created>
+      <created>1757946751334</created>
       <option name="number" value="00030" />
       <option name="presentableId" value="LOCAL-00030" />
       <option name="project" value="LOCAL" />
-      <updated>1757953609174</updated>
+      <updated>1757946751334</updated>
     </task>
-    <task id="LOCAL-00031" summary="Новая сборка">
+    <task id="LOCAL-00031" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757954324493</created>
+      <created>1757947002650</created>
       <option name="number" value="00031" />
       <option name="presentableId" value="LOCAL-00031" />
       <option name="project" value="LOCAL" />
-      <updated>1757954324493</updated>
+      <updated>1757947002650</updated>
     </task>
-    <task id="LOCAL-00032" summary="Новая сборка">
+    <task id="LOCAL-00032" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757954659285</created>
+      <created>1757947587867</created>
       <option name="number" value="00032" />
       <option name="presentableId" value="LOCAL-00032" />
       <option name="project" value="LOCAL" />
-      <updated>1757954659285</updated>
+      <updated>1757947587867</updated>
     </task>
-    <task id="LOCAL-00033" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757955479864</created>
-      <option name="number" value="00033" />
-      <option name="presentableId" value="LOCAL-00033" />
-      <option name="project" value="LOCAL" />
-      <updated>1757955479864</updated>
-    </task>
-    <task id="LOCAL-00034" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757956504265</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1757956504265</updated>
-    </task>
-    <task id="LOCAL-00035" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757957469587</created>
-      <option name="number" value="00035" />
-      <option name="presentableId" value="LOCAL-00035" />
-      <option name="project" value="LOCAL" />
-      <updated>1757957469587</updated>
-    </task>
-    <task id="LOCAL-00036" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757959713311</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1757959713311</updated>
-    </task>
-    <task id="LOCAL-00037" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757960055201</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
-      <option name="project" value="LOCAL" />
-      <updated>1757960055201</updated>
-    </task>
-    <task id="LOCAL-00038" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757961054543</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1757961054543</updated>
-    </task>
-    <task id="LOCAL-00039" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757961997213</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1757961997213</updated>
-    </task>
-    <task id="LOCAL-00040" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757963090365</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
-      <option name="project" value="LOCAL" />
-      <updated>1757963090365</updated>
-    </task>
-    <task id="LOCAL-00041" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757964386851</created>
-      <option name="number" value="00041" />
-      <option name="presentableId" value="LOCAL-00041" />
-      <option name="project" value="LOCAL" />
-      <updated>1757964386851</updated>
-    </task>
-    <task id="LOCAL-00042" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757964789733</created>
-      <option name="number" value="00042" />
-      <option name="presentableId" value="LOCAL-00042" />
-      <option name="project" value="LOCAL" />
-      <updated>1757964789733</updated>
-    </task>
-    <task id="LOCAL-00043" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757965332223</created>
-      <option name="number" value="00043" />
-      <option name="presentableId" value="LOCAL-00043" />
-      <option name="project" value="LOCAL" />
-      <updated>1757965332223</updated>
-    </task>
-    <task id="LOCAL-00044" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757966213982</created>
-      <option name="number" value="00044" />
-      <option name="presentableId" value="LOCAL-00044" />
-      <option name="project" value="LOCAL" />
-      <updated>1757966213982</updated>
-    </task>
-    <task id="LOCAL-00045" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757966570713</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1757966570713</updated>
-    </task>
-    <task id="LOCAL-00046" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757967805315</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1757967805315</updated>
-    </task>
-    <task id="LOCAL-00047" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757967858528</created>
-      <option name="number" value="00047" />
-      <option name="presentableId" value="LOCAL-00047" />
-      <option name="project" value="LOCAL" />
-      <updated>1757967858528</updated>
-    </task>
-    <task id="LOCAL-00048" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757968039146</created>
-      <option name="number" value="00048" />
-      <option name="presentableId" value="LOCAL-00048" />
-      <option name="project" value="LOCAL" />
-      <updated>1757968039146</updated>
-    </task>
-    <task id="LOCAL-00049" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757968334571</created>
-      <option name="number" value="00049" />
-      <option name="presentableId" value="LOCAL-00049" />
-      <option name="project" value="LOCAL" />
-      <updated>1757968334571</updated>
-    </task>
-    <task id="LOCAL-00050" summary="Новая сборка">
-      <option name="closed" value="true" />
-      <created>1757968697327</created>
-      <option name="number" value="00050" />
-      <option name="presentableId" value="LOCAL-00050" />
-      <option name="project" value="LOCAL" />
-      <updated>1757968697328</updated>
-    </task>
-    <option name="localTasksCounter" value="51" />
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -467,7 +332,8 @@
     <MESSAGE value="Добавлен артефакт" />
     <MESSAGE value="Добавлен артефакт а buildozer.spec" />
     <MESSAGE value="Изменен buildozer.spec" />
-    <MESSAGE value="Новая сборка" />
-    <option name="LAST_COMMIT_MESSAGE" value="Новая сборка" />
+    <MESSAGE value="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer" />
+    <MESSAGE value="workflow для GitHub Actions, Python-for-Android (p4a)" />
+    <option name="LAST_COMMIT_MESSAGE" value="workflow для GitHub Actions, Python-for-Android (p4a)" />
   </component>
 </project>
