@@ -8,19 +8,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build APK
-        uses: kivy/android-apk-generator@master
-        with:
-          package-name: org.exam.examapp
-          app-name: Exam App
-          version: 0.1
-          orientation: portrait
-          requirements: kivy
-          main-file: main.py
-          permissions: INTERNET
+      - name: Build using Python Docker image
+        run: |
+          # Создаем простой main.py если его нет
+          if [ ! -f main.py ]; then
+            echo "print('Hello from Exam App')" > main.py
+          fi
+
+          # Запускаем сборку в официальном Python контейнере
+          docker run --rm \
+            -v $PWD:/src \
+            -v $PWD/.buildozer:/root/.buildozer \
+            python:3.8-slim-bullseye \
+            bash -c "
+            cd /src &&
+            apt-get update &&
+            apt-get install -y \
+                git \
+                zip \
+                unzip \
+                openjdk-8-jdk \
+                autoconf \
+                automake \
+                libtool \
+                pkg-config \
+                zlib1g-dev \
+                cmake \
+                libffi-dev \
+                libssl-dev \
+                gettext \
+                autopoint \
+                libltdl-dev \
+                ccache \
+                python3-pip \
+                python3-setuptools &&
+            pip install buildozer cython &&
+            buildozer init &&
+            sed -i 's/^title = .*/title = Exam App/' buildozer.spec &&
+            sed -i 's/^package.name = .*/package.name = examapp/' buildozer.spec &&
+            sed -i 's/^package.domain = .*/package.domain = org.exam/' buildozer.spec &&
+            sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec &&
+            sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec &&
+            sed -i 's/^android.ndk = .*/android.ndk = 25b/' buildozer.spec &&
+            sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec &&
+            buildozer android debug
+            "
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-apk
-          path: dist/*.apk
+          path: bin/*.apk
