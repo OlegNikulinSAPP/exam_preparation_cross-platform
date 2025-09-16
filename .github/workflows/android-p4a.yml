@@ -25,6 +25,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildozer-
 
+      - name: Install Android SDK components
+        run: |
+          # Установка Android SDK и необходимых компонентов
+          mkdir ~/android-sdk
+          wget -qO- https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip | unzip -d ~/android-sdk
+          yes | ~/android-sdk/tools/bin/sdkmanager --licenses
+          ~/android-sdk/tools/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-30" "platform-tools"
+
       - name: Build Android APK inside Docker container
         run: |
           # Запускаем сборку в Ubuntu 20.04 контейнере
@@ -44,29 +52,8 @@ jobs:
             ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
             dpkg-reconfigure --frontend noninteractive tzdata
 
-            # Установка зависимостей (убираем конфликтующие пакеты)
-            apt-get update && apt-get install -y \
-              software-properties-common \
-              git \
-              zip \
-              unzip \
-              openjdk-8-jdk \
-              autoconf \
-              automake \
-              libtool \
-              pkg-config \
-              zlib1g-dev \
-              cmake \
-              libffi-dev \
-              libssl-dev \
-              gettext \
-              autopoint \
-              libltdl-dev \
-              ccache \
-              python3 \
-              python3-pip \
-              python3-setuptools \
-              wget
+            # Установка зависимостей
+            apt-get update && apt-get install -y ...
 
             # Установка Buildozer
             pip3 install --upgrade pip
@@ -74,7 +61,7 @@ jobs:
 
             # Переход в рабочую директорию и запуск сборки
             cd /src
-            BUILDOZER_WARN_ON_ROOT=false buildozer --no-input android debug
+            BUILDOZER_ANDROID_SDK=$HOME/android-sdk BUILDOZER_ANDROID_NDK=/opt/android-ndk-r25b buildozer --no-input android debug
             "
 
       - name: Upload APK
