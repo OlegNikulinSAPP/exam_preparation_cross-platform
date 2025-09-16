@@ -85,9 +85,9 @@ jobs:
           pip3 install --upgrade pip
           pip3 install buildozer cython
 
-      - name: Edit config without sed errors
+      - name: Edit config directly
         run: |
-          # Редактируем файл напрямую
+          # Прямая запись в файл без использования sed
           echo "LANG=\"en_US.UTF-8\"" | sudo tee /etc/default/locale > /dev/null
 
       - name: Build Android APK inside Docker container
