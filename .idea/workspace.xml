@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="" />
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/android-p4a.yml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -66,22 +68,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757879798198</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1757879798198</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757880250297</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1757880250297</updated>
     </task>
     <task id="LOCAL-00018" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
@@ -459,7 +445,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758023921557</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758024191775</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1758024191775</updated>
+    </task>
+    <task id="LOCAL-00066" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758024415963</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1758024415963</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
