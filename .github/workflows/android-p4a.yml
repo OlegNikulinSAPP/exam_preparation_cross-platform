@@ -85,10 +85,15 @@ jobs:
           pip3 install --upgrade pip
           pip3 install buildozer cython
 
-      - name: Directly configure locale settings
+      - name: Explicitly configure locale settings
         run: |
           # Прямо записываем настройки локали
           echo "LANG=\"en_US.UTF-8\"" | sudo tee /etc/default/locale > /dev/null
+
+      - name: Force-disable sed globally
+        run: |
+          # Деактивируем sed глобально
+          sudo chmod -x $(which sed)
 
       - name: Build Android APK inside Docker container
         run: |
@@ -113,6 +118,11 @@ jobs:
             cd /src
             BUILDOZER_ANDROID_SDK=\$HOME/android-sdk BUILDOZER_ANDROID_NDK=/opt/android-ndk-r25b buildozer --no-input android debug
             "
+
+      - name: Restore sed functionality
+        run: |
+          # Восстанавливаем функциональность sed
+          sudo chmod +x $(which sed)
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
