@@ -46,10 +46,10 @@ jobs:
       - name: Install dependencies
         run: |
           # Установка зависимостей
-          apt-get update && apt-get install -y ...
+          sudo apt-get update && sudo apt-get install -y ...
 
           # Установка Python 3 и pip
-          apt-get install -y python3 python3-pip python3-setuptools
+          sudo apt-get install -y python3 python3-pip python3-setuptools
 
           # Установка Buildozer
           pip3 install --upgrade pip
