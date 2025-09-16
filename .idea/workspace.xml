@@ -69,22 +69,6 @@
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
     </task>
-    <task id="LOCAL-00005" summary="Добавлен артефакт">
-      <option name="closed" value="true" />
-      <created>1757872467217</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1757872467217</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Добавлен артефакт а buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757872979996</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1757872979996</updated>
-    </task>
     <task id="LOCAL-00007" summary="Добавлен артефакт а buildozer.spec">
       <option name="closed" value="true" />
       <created>1757873251341</created>
@@ -461,7 +445,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758021522237</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758021715577</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1758021715577</updated>
+    </task>
+    <task id="LOCAL-00055" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758021895773</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1758021895773</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
