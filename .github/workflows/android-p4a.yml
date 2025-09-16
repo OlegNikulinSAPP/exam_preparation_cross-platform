@@ -81,13 +81,16 @@ jobs:
                 python3-setuptools \
                 wget
 
-            # Переключаемся на обычного пользователя
-            su - user -c '
-            # Установка Buildozer
-            pip3 install --upgrade pip
-            pip3 install buildozer cython
+            # Установка Buildozer для пользователя
+            sudo -u user pip3 install --user --upgrade pip
+            sudo -u user pip3 install --user buildozer cython
 
-            # Переходим в директорию проекта и запускаем сборку
+            # Добавляем путь к локальным бинарникам пользователя в PATH
+            echo 'export PATH=\$PATH:/home/user/.local/bin' >> /home/user/.bashrc
+
+            # Переходим в директорию проекта и запускаем сборку от имени пользователя
+            sudo -u user bash -c '
+            source ~/.bashrc
             cd /src
             if [ ! -f buildozer.spec ]; then
                 buildozer init

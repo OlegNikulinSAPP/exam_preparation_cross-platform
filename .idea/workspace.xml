@@ -382,7 +382,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758010926093</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="New сборка с часовым поясом">
+      <option name="closed" value="true" />
+      <created>1758017349675</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1758017349675</updated>
+    </task>
+    <task id="LOCAL-00041" summary="New сборка с часовым поясом и подтверждением">
+      <option name="closed" value="true" />
+      <created>1758017817850</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1758017817850</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -394,6 +410,8 @@
     <MESSAGE value="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer" />
     <MESSAGE value="workflow для GitHub Actions, Python-for-Android (p4a)" />
     <MESSAGE value="New сборка" />
-    <option name="LAST_COMMIT_MESSAGE" value="New сборка" />
+    <MESSAGE value="New сборка с часовым поясом" />
+    <MESSAGE value="New сборка с часовым поясом и подтверждением" />
+    <option name="LAST_COMMIT_MESSAGE" value="New сборка с часовым поясом и подтверждением" />
   </component>
 </project>
