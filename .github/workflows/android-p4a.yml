@@ -1,4 +1,4 @@
-name: Build Android APK with Python-for-Android in Docker
+name: Build Android APK with Kivy
 
 on: [push, workflow_dispatch]
 
@@ -8,22 +8,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build using Python-for-Android in Docker
+      - name: Build using Ubuntu Docker image
         run: |
           # Создаем простой main.py если его нет
           if [ ! -f main.py ]; then
-            echo "print('Hello from Exam App')" > main.py
-          fi
+              echo "from kivy.app import App
+          from kivy.uix.label import Label
+          
+          class ExamApp(App):
+              def build(self):
+                  return Label(text='Hello from Exam App')
+          
+          if __name__ == '__main__':
+              ExamApp().run()" > main.py
+                    fi
 
-          # Запускаем сборку в контейнере с python-for-android
+          # Запускаем сборку в Ubuntu 20.04 контейнере
           docker run --rm \
             -v $PWD:/src \
-            -v $PWD/.python-for-android:/root/.local/share/python-for-android \
-            python:3.8-slim-bullseye \
+            -v $PWD/.buildozer:/root/.buildozer \
+            ubuntu:20.04 \
             bash -c "
-            cd /src &&
-            apt-get update &&
-            apt-get install -y \
+            # Настройка локали для избежания предупреждений
+            apt-get update && apt-get install -y locales
+            locale-gen en_US.UTF-8
+            export LANG=en_US.UTF-8
+            export LANGUAGE=en_US:en
+            export LC_ALL=en_US.UTF-8
+
+            # Установка зависимостей
+            apt-get update && apt-get install -y \
+                software-properties-common \
                 git \
                 zip \
                 unzip \
@@ -36,26 +51,37 @@ jobs:
                 cmake \
                 libffi-dev \
                 libssl-dev \
+                gettext \
+                autopoint \
+                libltdl-dev \
+                ccache \
+                python3 \
                 python3-pip \
-                python3-setuptools &&
-            pip install python-for-android &&
-            p4a apk \
-                --dist_name=examapp \
-                --bootstrap=sdl2 \
-                --requirements=python3,kivy \
-                --arch=arm64-v8a \
-                --android-api=33 \
-                --private=. \
-                --package=org.exam.examapp \
-                --name='Exam App' \
-                --version=0.1 \
-                --orientation=portrait \
-                --window \
-                --permission=INTERNET
+                python3-setuptools \
+                wget
+
+            # Установка Buildozer
+            pip3 install --upgrade pip
+            pip3 install buildozer cython
+
+            # Переходим в директорию проекта и запускаем сборку
+            cd /src
+            buildozer init
+            sed -i 's/^title = .*/title = Exam App/' buildozer.spec
+            sed -i 's/^package.name = .*/package.name = examapp/' buildozer.spec
+            sed -i 's/^package.domain = .*/package.domain = org.exam/' buildozer.spec
+            sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec
+            sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec
+            sed -i 's/^android.ndk = .*/android.ndk = 25b/' buildozer.spec
+            sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
+            sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
+            
+            # Запускаем сборку
+            buildozer android debug
             "
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-apk
-          path: dist/*.apk
+          path: bin/*.apk
