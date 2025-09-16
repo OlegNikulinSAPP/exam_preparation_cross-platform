@@ -27,10 +27,15 @@ jobs:
 
       - name: Install Android SDK components
         run: |
-          # Установка Android SDK и необходимых компонентов
+          # Создание каталога для Android SDK
           mkdir ~/android-sdk
-          wget -qO- https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip | unzip -d ~/android-sdk
+          # Загрузка архива Android SDK
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+          # Распаковка архива
+          unzip commandlinetools-linux-7583922_latest.zip -d ~/android-sdk
+          # Соглашаемся с лицензиями
           yes | ~/android-sdk/tools/bin/sdkmanager --licenses
+          # Установка необходимых компонентов
           ~/android-sdk/tools/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-30" "platform-tools"
 
       - name: Build Android APK inside Docker container
