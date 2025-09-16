@@ -33,6 +33,8 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
           # Распаковка архива
           unzip commandlinetools-linux-7583922_latest.zip -d ~/android-sdk
+          # Перемещение извлечённого архива в нужный каталог
+          mv ~/android-sdk/cmdline-tools ~/android-sdk/tools
           # Соглашаемся с лицензиями
           yes | ~/android-sdk/tools/bin/sdkmanager --licenses
           # Установка необходимых компонентов
