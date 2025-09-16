@@ -8,13 +8,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clean workspace
-        run: rm -rf *
-
       - name: Create buildozer.spec if not exists
         run: |
           if [ ! -f buildozer.spec ]; then
-            cp buildozer-spec-template.txt buildozer.spec
+            touch buildozer.spec
+            cat << EOF >> buildozer.spec
+[app]
+
+# (str) Title of your application
+title = My App
+
+# (str) Package name
+package.name = myapp
+
+# (str) Package domain (needed for android/ios packaging)
+package.domain = com.example
+
+# (str) Source code where the main.py lives
+source.dir = .
+
+# (list) Requirements
+requirements = python3,kivy
+
+# (str) Orientation (landscape, portrait or all)
+orientation = portrait
+
+# (list) Permissions
+android.permissions = INTERNET
+EOF
           fi
 
       - name: Set up Docker Buildx

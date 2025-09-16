@@ -1,0 +1,22 @@
+[app]
+
+# (str) Title of your application
+title = My App
+
+# (str) Package name
+package.name = myapp
+
+# (str) Package domain (needed for android/ios packaging)
+package.domain = com.example
+
+# (str) Source code where the main.py lives
+source.dir = .
+
+# (list) Requirements
+requirements = python3,kivy
+
+# (str) Orientation (landscape, portrait or all)
+orientation = portrait
+
+# (list) Permissions
+android.permissions = INTERNET
