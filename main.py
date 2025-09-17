@@ -474,7 +474,8 @@ class ExamTab(BoxLayout):
                 text_size=(Window.width - dp(60), None),
                 halign='left',
                 valign='middle',
-                font_size=dp(16)
+                font_size=dp(16),
+                color=(0, 0, 0, 1)
             )
             label.bind(size=label.setter('text_size'))
 

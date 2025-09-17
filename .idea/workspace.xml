@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_15_09_2025_18_18__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_15_09_2025_18_18__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_09_2025_15_56__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_09_2025_15_56__Changes_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/questions.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,22 +69,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
-    </task>
-    <task id="LOCAL-00018" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757880611902</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1757880611902</updated>
-    </task>
-    <task id="LOCAL-00019" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757881284928</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1757881284928</updated>
     </task>
     <task id="LOCAL-00020" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
@@ -467,7 +446,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758024415963</updated>
     </task>
-    <option name="localTasksCounter" value="67" />
+    <task id="LOCAL-00067" summary="Реализация подсветки вопросов цветом при ответе">
+      <option name="closed" value="true" />
+      <created>1758117572508</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1758117572513</updated>
+    </task>
+    <task id="LOCAL-00068" summary="Реализация подсветки вопросов цветом при ответе">
+      <option name="closed" value="true" />
+      <created>1758118761554</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1758118761555</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -482,6 +477,7 @@
     <MESSAGE value="New сборка с часовым поясом" />
     <MESSAGE value="New сборка с часовым поясом и подтверждением" />
     <MESSAGE value="Бульдозер" />
-    <option name="LAST_COMMIT_MESSAGE" value="Бульдозер" />
+    <MESSAGE value="Реализация подсветки вопросов цветом при ответе" />
+    <option name="LAST_COMMIT_MESSAGE" value="Реализация подсветки вопросов цветом при ответе" />
   </component>
 </project>
