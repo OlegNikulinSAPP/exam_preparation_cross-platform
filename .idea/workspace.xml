@@ -4,8 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="Изменены размеры для разных ОС">
+    <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_15_09_2025_18_18__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_15_09_2025_18_18__Changes_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_09_2025_15_56__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_09_2025_15_56__Changes_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/questions.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,16 +52,17 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Locadm/PycharmProjects/exam_preparation_cross-platform&quot;
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/NikulinOV/PycharmProjects/exam_preparation_cross-platform&quot;
   }
 }</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-975db3bf15a3-31b6be0877a2-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.18034.82" />
+        <option value="bundled-python-sdk-c69650fc56ca-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.15619.17" />
       </set>
     </attachedChunks>
   </component>
@@ -67,54 +74,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757878136011</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1757878136011</updated>
-    </task>
-    <task id="LOCAL-00013" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757878446626</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1757878446626</updated>
-    </task>
-    <task id="LOCAL-00014" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757879079308</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1757879079308</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757879486909</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1757879486909</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757879798198</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1757879798198</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757880250297</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1757880250297</updated>
     </task>
     <task id="LOCAL-00018" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
@@ -196,271 +155,319 @@
       <option name="project" value="LOCAL" />
       <updated>1757883453463</updated>
     </task>
-    <task id="LOCAL-00028" summary="Новая сборка">
+    <task id="LOCAL-00028" summary="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer">
       <option name="closed" value="true" />
-      <created>1757951078333</created>
+      <created>1757944769824</created>
       <option name="number" value="00028" />
       <option name="presentableId" value="LOCAL-00028" />
       <option name="project" value="LOCAL" />
-      <updated>1757951078333</updated>
+      <updated>1757944769824</updated>
     </task>
-    <task id="LOCAL-00029" summary="Новая сборка">
+    <task id="LOCAL-00029" summary="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer">
       <option name="closed" value="true" />
-      <created>1757952578694</created>
+      <created>1757945446467</created>
       <option name="number" value="00029" />
       <option name="presentableId" value="LOCAL-00029" />
       <option name="project" value="LOCAL" />
-      <updated>1757952578694</updated>
+      <updated>1757945446467</updated>
     </task>
-    <task id="LOCAL-00030" summary="Новая сборка">
+    <task id="LOCAL-00030" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757953609174</created>
+      <created>1757946751334</created>
       <option name="number" value="00030" />
       <option name="presentableId" value="LOCAL-00030" />
       <option name="project" value="LOCAL" />
-      <updated>1757953609174</updated>
+      <updated>1757946751334</updated>
     </task>
-    <task id="LOCAL-00031" summary="Новая сборка">
+    <task id="LOCAL-00031" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757954324493</created>
+      <created>1757947002650</created>
       <option name="number" value="00031" />
       <option name="presentableId" value="LOCAL-00031" />
       <option name="project" value="LOCAL" />
-      <updated>1757954324493</updated>
+      <updated>1757947002650</updated>
     </task>
-    <task id="LOCAL-00032" summary="Новая сборка">
+    <task id="LOCAL-00032" summary="workflow для GitHub Actions, Python-for-Android (p4a)">
       <option name="closed" value="true" />
-      <created>1757954659285</created>
+      <created>1757947587867</created>
       <option name="number" value="00032" />
       <option name="presentableId" value="LOCAL-00032" />
       <option name="project" value="LOCAL" />
-      <updated>1757954659285</updated>
+      <updated>1757947587867</updated>
     </task>
-    <task id="LOCAL-00033" summary="Новая сборка">
+    <task id="LOCAL-00033" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757955479864</created>
+      <created>1758002132552</created>
       <option name="number" value="00033" />
       <option name="presentableId" value="LOCAL-00033" />
       <option name="project" value="LOCAL" />
-      <updated>1757955479864</updated>
+      <updated>1758002132552</updated>
     </task>
-    <task id="LOCAL-00034" summary="Новая сборка">
+    <task id="LOCAL-00034" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757956504265</created>
+      <created>1758003321496</created>
       <option name="number" value="00034" />
       <option name="presentableId" value="LOCAL-00034" />
       <option name="project" value="LOCAL" />
-      <updated>1757956504265</updated>
+      <updated>1758003321496</updated>
     </task>
-    <task id="LOCAL-00035" summary="Новая сборка">
+    <task id="LOCAL-00035" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757957469587</created>
+      <created>1758008186236</created>
       <option name="number" value="00035" />
       <option name="presentableId" value="LOCAL-00035" />
       <option name="project" value="LOCAL" />
-      <updated>1757957469587</updated>
+      <updated>1758008186236</updated>
     </task>
-    <task id="LOCAL-00036" summary="Новая сборка">
+    <task id="LOCAL-00036" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757959713311</created>
+      <created>1758008297061</created>
       <option name="number" value="00036" />
       <option name="presentableId" value="LOCAL-00036" />
       <option name="project" value="LOCAL" />
-      <updated>1757959713311</updated>
+      <updated>1758008297061</updated>
     </task>
-    <task id="LOCAL-00037" summary="Новая сборка">
+    <task id="LOCAL-00037" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757960055201</created>
+      <created>1758008453289</created>
       <option name="number" value="00037" />
       <option name="presentableId" value="LOCAL-00037" />
       <option name="project" value="LOCAL" />
-      <updated>1757960055201</updated>
+      <updated>1758008453289</updated>
     </task>
-    <task id="LOCAL-00038" summary="Новая сборка">
+    <task id="LOCAL-00038" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757961054543</created>
+      <created>1758008518031</created>
       <option name="number" value="00038" />
       <option name="presentableId" value="LOCAL-00038" />
       <option name="project" value="LOCAL" />
-      <updated>1757961054543</updated>
+      <updated>1758008518031</updated>
     </task>
-    <task id="LOCAL-00039" summary="Новая сборка">
+    <task id="LOCAL-00039" summary="New сборка">
       <option name="closed" value="true" />
-      <created>1757961997213</created>
+      <created>1758010926093</created>
       <option name="number" value="00039" />
       <option name="presentableId" value="LOCAL-00039" />
       <option name="project" value="LOCAL" />
-      <updated>1757961997213</updated>
+      <updated>1758010926093</updated>
     </task>
-    <task id="LOCAL-00040" summary="Новая сборка">
+    <task id="LOCAL-00040" summary="New сборка с часовым поясом">
       <option name="closed" value="true" />
-      <created>1757963090365</created>
+      <created>1758017349675</created>
       <option name="number" value="00040" />
       <option name="presentableId" value="LOCAL-00040" />
       <option name="project" value="LOCAL" />
-      <updated>1757963090365</updated>
+      <updated>1758017349675</updated>
     </task>
-    <task id="LOCAL-00041" summary="Новая сборка">
+    <task id="LOCAL-00041" summary="New сборка с часовым поясом и подтверждением">
       <option name="closed" value="true" />
-      <created>1757964386851</created>
+      <created>1758017817850</created>
       <option name="number" value="00041" />
       <option name="presentableId" value="LOCAL-00041" />
       <option name="project" value="LOCAL" />
-      <updated>1757964386851</updated>
+      <updated>1758017817850</updated>
     </task>
-    <task id="LOCAL-00042" summary="Новая сборка">
+    <task id="LOCAL-00042" summary="New сборка с часовым поясом и подтверждением">
       <option name="closed" value="true" />
-      <created>1757964789733</created>
+      <created>1758018472269</created>
       <option name="number" value="00042" />
       <option name="presentableId" value="LOCAL-00042" />
       <option name="project" value="LOCAL" />
-      <updated>1757964789733</updated>
+      <updated>1758018472269</updated>
     </task>
-    <task id="LOCAL-00043" summary="Новая сборка">
+    <task id="LOCAL-00043" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757965332223</created>
+      <created>1758019146685</created>
       <option name="number" value="00043" />
       <option name="presentableId" value="LOCAL-00043" />
       <option name="project" value="LOCAL" />
-      <updated>1757965332223</updated>
+      <updated>1758019146685</updated>
     </task>
-    <task id="LOCAL-00044" summary="Новая сборка">
+    <task id="LOCAL-00044" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757966213982</created>
+      <created>1758019656520</created>
       <option name="number" value="00044" />
       <option name="presentableId" value="LOCAL-00044" />
       <option name="project" value="LOCAL" />
-      <updated>1757966213982</updated>
+      <updated>1758019656520</updated>
     </task>
-    <task id="LOCAL-00045" summary="Новая сборка">
+    <task id="LOCAL-00045" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757966570713</created>
+      <created>1758019869752</created>
       <option name="number" value="00045" />
       <option name="presentableId" value="LOCAL-00045" />
       <option name="project" value="LOCAL" />
-      <updated>1757966570713</updated>
+      <updated>1758019869752</updated>
     </task>
-    <task id="LOCAL-00046" summary="Новая сборка">
+    <task id="LOCAL-00046" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757967805315</created>
+      <created>1758020009377</created>
       <option name="number" value="00046" />
       <option name="presentableId" value="LOCAL-00046" />
       <option name="project" value="LOCAL" />
-      <updated>1757967805315</updated>
+      <updated>1758020009377</updated>
     </task>
-    <task id="LOCAL-00047" summary="Новая сборка">
+    <task id="LOCAL-00047" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757967858528</created>
+      <created>1758020200926</created>
       <option name="number" value="00047" />
       <option name="presentableId" value="LOCAL-00047" />
       <option name="project" value="LOCAL" />
-      <updated>1757967858528</updated>
+      <updated>1758020200926</updated>
     </task>
-    <task id="LOCAL-00048" summary="Новая сборка">
+    <task id="LOCAL-00048" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757968039146</created>
+      <created>1758020563767</created>
       <option name="number" value="00048" />
       <option name="presentableId" value="LOCAL-00048" />
       <option name="project" value="LOCAL" />
-      <updated>1757968039146</updated>
+      <updated>1758020563767</updated>
     </task>
-    <task id="LOCAL-00049" summary="Новая сборка">
+    <task id="LOCAL-00049" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757968334571</created>
+      <created>1758020758942</created>
       <option name="number" value="00049" />
       <option name="presentableId" value="LOCAL-00049" />
       <option name="project" value="LOCAL" />
-      <updated>1757968334571</updated>
+      <updated>1758020758942</updated>
     </task>
-    <task id="LOCAL-00050" summary="Новая сборка">
+    <task id="LOCAL-00050" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1757968697327</created>
+      <created>1758020987987</created>
       <option name="number" value="00050" />
       <option name="presentableId" value="LOCAL-00050" />
       <option name="project" value="LOCAL" />
-      <updated>1757968697328</updated>
+      <updated>1758020987988</updated>
     </task>
-    <task id="LOCAL-00051" summary="Новая сборка">
+    <task id="LOCAL-00051" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758027597178</created>
+      <created>1758021165710</created>
       <option name="number" value="00051" />
       <option name="presentableId" value="LOCAL-00051" />
       <option name="project" value="LOCAL" />
-      <updated>1758027597179</updated>
+      <updated>1758021165710</updated>
     </task>
-    <task id="LOCAL-00052" summary="Новая сборка">
+    <task id="LOCAL-00052" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758027832631</created>
+      <created>1758021308101</created>
       <option name="number" value="00052" />
       <option name="presentableId" value="LOCAL-00052" />
       <option name="project" value="LOCAL" />
-      <updated>1758027832631</updated>
+      <updated>1758021308101</updated>
     </task>
-    <task id="LOCAL-00053" summary="Новая сборка">
+    <task id="LOCAL-00053" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758028065885</created>
+      <created>1758021522237</created>
       <option name="number" value="00053" />
       <option name="presentableId" value="LOCAL-00053" />
       <option name="project" value="LOCAL" />
-      <updated>1758028065885</updated>
+      <updated>1758021522237</updated>
     </task>
-    <task id="LOCAL-00054" summary="Новая сборка">
+    <task id="LOCAL-00054" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758028286405</created>
+      <created>1758021715577</created>
       <option name="number" value="00054" />
       <option name="presentableId" value="LOCAL-00054" />
       <option name="project" value="LOCAL" />
-      <updated>1758028286405</updated>
+      <updated>1758021715577</updated>
     </task>
-    <task id="LOCAL-00055" summary="Новая сборка">
+    <task id="LOCAL-00055" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758028504661</created>
+      <created>1758021895773</created>
       <option name="number" value="00055" />
       <option name="presentableId" value="LOCAL-00055" />
       <option name="project" value="LOCAL" />
-      <updated>1758028504662</updated>
+      <updated>1758021895773</updated>
     </task>
-    <task id="LOCAL-00056" summary="Новая сборка">
+    <task id="LOCAL-00056" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758028738251</created>
+      <created>1758022184255</created>
       <option name="number" value="00056" />
       <option name="presentableId" value="LOCAL-00056" />
       <option name="project" value="LOCAL" />
-      <updated>1758028738251</updated>
+      <updated>1758022184255</updated>
     </task>
-    <task id="LOCAL-00057" summary="Новая сборка">
+    <task id="LOCAL-00057" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758029009777</created>
+      <created>1758022379603</created>
       <option name="number" value="00057" />
       <option name="presentableId" value="LOCAL-00057" />
       <option name="project" value="LOCAL" />
-      <updated>1758029009777</updated>
+      <updated>1758022379603</updated>
     </task>
-    <task id="LOCAL-00058" summary="Новая сборка">
+    <task id="LOCAL-00058" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758029309041</created>
+      <created>1758022795238</created>
       <option name="number" value="00058" />
       <option name="presentableId" value="LOCAL-00058" />
       <option name="project" value="LOCAL" />
-      <updated>1758029309041</updated>
+      <updated>1758022795238</updated>
     </task>
-    <task id="LOCAL-00059" summary="Новая сборка под линукс">
+    <task id="LOCAL-00059" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758036160619</created>
+      <created>1758022979360</created>
       <option name="number" value="00059" />
       <option name="presentableId" value="LOCAL-00059" />
       <option name="project" value="LOCAL" />
-      <updated>1758036160619</updated>
+      <updated>1758022979360</updated>
     </task>
-    <task id="LOCAL-00060" summary="Изменены размеры для разных ОС">
+    <task id="LOCAL-00060" summary="Бульдозер">
       <option name="closed" value="true" />
-      <created>1758053261089</created>
+      <created>1758023162452</created>
       <option name="number" value="00060" />
       <option name="presentableId" value="LOCAL-00060" />
       <option name="project" value="LOCAL" />
-      <updated>1758053261089</updated>
+      <updated>1758023162452</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023332161</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023332161</updated>
+    </task>
+    <task id="LOCAL-00062" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023550180</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023550180</updated>
+    </task>
+    <task id="LOCAL-00063" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023723883</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023723883</updated>
+    </task>
+    <task id="LOCAL-00064" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758023921557</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1758023921557</updated>
+    </task>
+    <task id="LOCAL-00065" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758024191775</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1758024191775</updated>
+    </task>
+    <task id="LOCAL-00066" summary="Бульдозер">
+      <option name="closed" value="true" />
+      <created>1758024415963</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1758024415963</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -469,9 +476,12 @@
     <MESSAGE value="Добавлен артефакт" />
     <MESSAGE value="Добавлен артефакт а buildozer.spec" />
     <MESSAGE value="Изменен buildozer.spec" />
-    <MESSAGE value="Новая сборка" />
-    <MESSAGE value="Новая сборка под линукс" />
-    <MESSAGE value="Изменены размеры для разных ОС" />
-    <option name="LAST_COMMIT_MESSAGE" value="Изменены размеры для разных ОС" />
+    <MESSAGE value="Мы начнем с создания нового workflow для GitHub Actions, который будет использовать Python-for-Android (p4a) вместо Buildozer" />
+    <MESSAGE value="workflow для GitHub Actions, Python-for-Android (p4a)" />
+    <MESSAGE value="New сборка" />
+    <MESSAGE value="New сборка с часовым поясом" />
+    <MESSAGE value="New сборка с часовым поясом и подтверждением" />
+    <MESSAGE value="Бульдозер" />
+    <option name="LAST_COMMIT_MESSAGE" value="Бульдозер" />
   </component>
 </project>
