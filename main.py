@@ -30,8 +30,8 @@ else:
 # Определяем путь к файлу в зависимости от платформы
 if platform == 'android':
     try:
-        from android.storage import app_storage_path, primary_external_storage_path
-        from android.permissions import request_permissions, Permission
+        from android.storage import app_storage_path, primary_external_storage_path  # type: ignore
+        from android.permissions import request_permissions, Permission  # type: ignore
 
         # Запрашиваем разрешения на запись во внешнее хранилище
         request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
@@ -642,10 +642,10 @@ class EditQuestionsTab(BoxLayout):
             btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(5))
 
             edit_btn = Button(text='Ред.', size_hint_x=0.5, font_size=dp(14))
-            edit_btn.bind(on_press=lambda instance, idx=idx: self.edit_question(idx, questions))
+            edit_btn.bind(on_press=lambda instance, current_idx=idx: self.edit_question(current_idx, questions))
 
             delete_btn = Button(text='Удл.', size_hint_x=0.5, font_size=dp(14))
-            delete_btn.bind(on_press=lambda instance, idx=idx: self.delete_question(idx, questions))
+            delete_btn.bind(on_press=lambda instance, current_idx=idx: self.delete_question(current_idx, questions))
 
             btn_layout.add_widget(edit_btn)
             btn_layout.add_widget(delete_btn)
@@ -855,7 +855,7 @@ class EditQuestionsTab(BoxLayout):
     def export_database(self, instance):
         try:
             if platform == 'android':
-                from android.storage import primary_external_storage_path
+                from android.storage import primary_external_storage_path  # type: ignore
                 export_path = primary_external_storage_path()
                 export_file = os.path.join(export_path, 'Documents', 'exam_backup.json')
 
@@ -880,7 +880,7 @@ class EditQuestionsTab(BoxLayout):
     def import_database(self, instance):
         try:
             if platform == 'android':
-                from android.storage import primary_external_storage_path
+                from android.storage import primary_external_storage_path  # type: ignore
                 import_path = primary_external_storage_path()
                 import_file = os.path.join(import_path, 'Documents', 'exam_backup.json')
 
