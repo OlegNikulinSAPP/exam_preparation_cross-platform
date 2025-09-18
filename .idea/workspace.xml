@@ -70,22 +70,6 @@
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
     </task>
-    <task id="LOCAL-00025" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757883073883</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1757883073883</updated>
-    </task>
-    <task id="LOCAL-00026" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757883155558</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1757883155558</updated>
-    </task>
     <task id="LOCAL-00027" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
       <created>1757883453463</created>
@@ -462,7 +446,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758194500736</updated>
     </task>
-    <option name="localTasksCounter" value="74" />
+    <task id="LOCAL-00074" summary="Исправлен путь к БД в папку загрузок для Андроид">
+      <option name="closed" value="true" />
+      <created>1758197560263</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1758197560264</updated>
+    </task>
+    <task id="LOCAL-00075" summary="Исправлены функции импорта и экспорта для работы со всем версиями Андроид">
+      <option name="closed" value="true" />
+      <created>1758200809479</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1758200809479</updated>
+    </task>
+    <option name="localTasksCounter" value="76" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -483,6 +483,8 @@
     <MESSAGE value="Исправлена ошибка сохранения БД" />
     <MESSAGE value="Обновлены функции экспорта и импорта БД" />
     <MESSAGE value="Улучшено отображение сообщений во всплывающих окнах экспорта/импорта" />
-    <option name="LAST_COMMIT_MESSAGE" value="Улучшено отображение сообщений во всплывающих окнах экспорта/импорта" />
+    <MESSAGE value="Исправлен путь к БД в папку загрузок для Андроид" />
+    <MESSAGE value="Исправлены функции импорта и экспорта для работы со всем версиями Андроид" />
+    <option name="LAST_COMMIT_MESSAGE" value="Исправлены функции импорта и экспорта для работы со всем версиями Андроид" />
   </component>
 </project>

@@ -35,10 +35,9 @@ if platform == 'android':
 
         # Запрашиваем разрешения
         request_permissions([Permission.WRITE_EXTERNAL_STORAGE,
-                             Permission.READ_EXTERNAL_STORAGE,
-                             Permission.MANAGE_EXTERNAL_STORAGE])
+                             Permission.READ_EXTERNAL_STORAGE])
 
-        # Используем внутреннее хранилище приложения для хранения вопросов
+        # Используем внутреннее хранилище приложения
         storage_path = app_storage_path()
         data_dir = os.path.join(storage_path, 'data')
         if not os.path.exists(data_dir):
@@ -920,46 +919,16 @@ class EditQuestionsTab(BoxLayout):
                 from jnius import autoclass
                 from android import mActivity
 
-                # Получаем версию Android
-                Build = autoclass('android.os.Build')
-                VERSION = autoclass('android.os.Build$VERSION')
-                sdk_int = VERSION.SDK_INT
+                # Получаем путь к папке Downloads
+                Environment = autoclass('android.os.Environment')
+                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                export_path = os.path.join(str(downloads_dir), 'questions_export.json')
 
-                if sdk_int >= 29:
-                    # Для Android 10+ используем MediaStore API
-                    MediaStore = autoclass('android.provider.MediaStore')
-                    ContentValues = autoclass('android.content.ContentValues')
+                # Сохраняем вопросы в файл экспорта
+                with open(export_path, 'w', encoding='utf-8') as f:
+                    json.dump(questions, f, ensure_ascii=False, indent=2)
 
-                    # Создаем контент значения для файла
-                    values = ContentValues()
-                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, "questions_export.json")
-                    values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
-                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Download")
-
-                    # Получаем ContentResolver
-                    resolver = mActivity.getContentResolver()
-                    collection = MediaStore.Files.getContentUri("external")
-                    uri = resolver.insert(collection, values)
-
-                    if uri:
-                        # Открываем выходной поток и записываем данные
-                        output_stream = resolver.openOutputStream(uri)
-                        output_stream.write(json.dumps(questions, ensure_ascii=False, indent=2).encode('utf-8'))
-                        output_stream.close()
-                        self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
-                    else:
-                        self.show_popup("Ошибка", "Не удалось создать файл для экспорта")
-                else:
-                    # Для старых версий Android используем прямой доступ к файлам
-                    Environment = autoclass('android.os.Environment')
-                    downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                    export_path = os.path.join(str(downloads_dir), 'questions_export.json')
-
-                    # Сохраняем вопросы в файл экспорта
-                    with open(export_path, 'w', encoding='utf-8') as f:
-                        json.dump(questions, f, ensure_ascii=False, indent=2)
-
-                    self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
+                self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
@@ -983,59 +952,20 @@ class EditQuestionsTab(BoxLayout):
         try:
             if platform == 'android':
                 from jnius import autoclass
-                from android import mActivity
 
-                # Получаем версию Android
-                Build = autoclass('android.os.Build')
-                VERSION = autoclass('android.os.Build$VERSION')
-                sdk_int = VERSION.SDK_INT
+                # Получаем путь к папке Downloads
+                Environment = autoclass('android.os.Environment')
+                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                import_path = os.path.join(str(downloads_dir), 'questions_export.json')
 
-                if sdk_int >= 29:
-                    # Для Android 10+ используем MediaStore API
-                    MediaStore = autoclass('android.provider.MediaStore')
+                # Проверяем существование файла импорта
+                if not os.path.exists(import_path):
+                    self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
+                    return
 
-                    # Получаем ContentResolver
-                    resolver = mActivity.getContentResolver()
-                    collection = MediaStore.Files.getContentUri("external")
-
-                    # Создаем запрос для поиска файла
-                    projection = [MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.DISPLAY_NAME]
-                    selection = MediaStore.Files.FileColumns.DISPLAY_NAME + " = ? AND " + MediaStore.Files.FileColumns.RELATIVE_PATH + " LIKE ?"
-                    selection_args = ["questions_export.json", "%Download%"]
-
-                    # Выполняем запрос
-                    cursor = resolver.query(collection, projection, selection, selection_args, None)
-
-                    if cursor and cursor.moveToFirst():
-                        # Получаем ID файла
-                        id_index = cursor.getColumnIndex(MediaStore.Files.FileColumns._ID)
-                        file_id = cursor.getLong(id_index)
-
-                        # Получаем URI файла
-                        Uri = autoclass('android.net.Uri')
-                        file_uri = Uri.withAppendedPath(collection, str(file_id))
-
-                        # Открываем входной поток и читаем данные
-                        input_stream = resolver.openInputStream(file_uri)
-                        imported_questions = json.load(input_stream)
-                        input_stream.close()
-                    else:
-                        self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
-                        return
-                else:
-                    # Для старых версий Android используем прямой доступ к файлам
-                    Environment = autoclass('android.os.Environment')
-                    downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                    import_path = os.path.join(str(downloads_dir), 'questions_export.json')
-
-                    # Проверяем существование файла импорта
-                    if not os.path.exists(import_path):
-                        self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
-                        return
-
-                    # Загружаем вопросы из файла импорта
-                    with open(import_path, 'r', encoding='utf-8') as f:
-                        imported_questions = json.load(f)
+                # Загружаем вопросы из файла импорта
+                with open(import_path, 'r', encoding='utf-8') as f:
+                    imported_questions = json.load(f)
             else:
                 # На других платформах используем папку загрузок
                 home_dir = os.path.expanduser("~")
