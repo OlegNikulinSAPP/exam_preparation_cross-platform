@@ -26,12 +26,12 @@ if platform in ('win', 'linux', 'macosx', 'unknown'):
 else:
     Window.fullscreen = 'auto'
 
-# Определяем путь к файлу в зависимости от платформы
 if platform == 'android':
     try:
-        from android import mActivity  # type: ignore
-        from android.storage import app_storage_path  # type: ignore
-        from android.permissions import request_permissions, Permission  # type: ignore
+        from android import mActivity
+        from android.storage import app_storage_path
+        from android.permissions import request_permissions, Permission
+        from jnius import autoclass
 
         # Запрашиваем разрешения на запись во внешнее хранилище
         request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
@@ -917,45 +917,78 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if platform == 'android':
-                # На Android используем специальный путь для экспорта
-                from android.storage import primary_external_storage_path  # type: ignore
-                export_dir = os.path.join(primary_external_storage_path(), 'Documents')
-                if not os.path.exists(export_dir):
-                    os.makedirs(export_dir)
-                export_path = os.path.join(export_dir, 'questions_export.json')
+                # Используем специальный метод для экспорта на Android
+                from android.storage import primary_external_storage_path
+                from android import mActivity
+                from jnius import autoclass
+
+                # Получаем путь к директории Downloads
+                Environment = autoclass('android.os.Environment')
+                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                export_path = os.path.join(str(downloads_dir), 'questions_export.json')
+
+                # Запрашиваем разрешение на запись (для Android 10+)
+                if hasattr(mActivity, 'requestPermissions'):
+                    from android.permissions import Permission, request_permissions
+                    request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+
+                # Сохраняем вопросы в файл экспорта
+                with open(export_path, 'w', encoding='utf-8') as f:
+                    json.dump(questions, f, ensure_ascii=False, indent=2)
+
+                self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
                 export_path = os.path.join(home_dir, 'questions_export.json')
 
-            # Сохраняем вопросы в файл экспорта
-            with open(export_path, 'w', encoding='utf-8') as f:
-                json.dump(questions, f, ensure_ascii=False, indent=2)
+                # Сохраняем вопросы в файл экспорта
+                with open(export_path, 'w', encoding='utf-8') as f:
+                    json.dump(questions, f, ensure_ascii=False, indent=2)
 
-            self.show_popup("Успех", f"База данных экспортирована в:\n{export_path}")
+                self.show_popup("Успех", f"База данных экспортирована в:\n{export_path}")
         except Exception as e:
             self.show_popup("Ошибка", f"Не удалось экспортировать базу: {str(e)}")
 
     def import_database(self, instance):
         try:
             if platform == 'android':
-                # На Android используем специальный путь для импорта
-                from android.storage import primary_external_storage_path  # type: ignore
-                import_dir = os.path.join(primary_external_storage_path(), 'Documents')
-                import_path = os.path.join(import_dir, 'questions_export.json')
+                # Используем специальный метод для импорта на Android
+                from android.storage import primary_external_storage_path
+                from android import mActivity
+                from jnius import autoclass
+
+                # Получаем путь к директории Downloads
+                Environment = autoclass('android.os.Environment')
+                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                import_path = os.path.join(str(downloads_dir), 'questions_export.json')
+
+                # Запрашиваем разрешение на чтение (для Android 10+)
+                if hasattr(mActivity, 'requestPermissions'):
+                    from android.permissions import Permission, request_permissions
+                    request_permissions([Permission.READ_EXTERNAL_STORAGE])
+
+                # Проверяем существование файла импорта
+                if not os.path.exists(import_path):
+                    self.show_popup("Ошибка", f"Файл для импорта не найден:\n{import_path}")
+                    return
+
+                # Загружаем вопросы из файла импорта
+                with open(import_path, 'r', encoding='utf-8') as f:
+                    imported_questions = json.load(f)
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
                 import_path = os.path.join(home_dir, 'questions_export.json')
 
-            # Проверяем существование файла импорта
-            if not os.path.exists(import_path):
-                self.show_popup("Ошибка", f"Файл для импорта не найден:\n{import_path}")
-                return
+                # Проверяем существование файла импорта
+                if not os.path.exists(import_path):
+                    self.show_popup("Ошибка", f"Файл для импорта не найден:\n{import_path}")
+                    return
 
-            # Загружаем вопросы из файла импорта
-            with open(import_path, 'r', encoding='utf-8') as f:
-                imported_questions = json.load(f)
+                # Загружаем вопросы из файла импорта
+                with open(import_path, 'r', encoding='utf-8') as f:
+                    imported_questions = json.load(f)
 
             # Проверяем валидность импортированных данных
             if not isinstance(imported_questions, list):
