@@ -70,22 +70,6 @@
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
     </task>
-    <task id="LOCAL-00023" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757882586246</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1757882586246</updated>
-    </task>
-    <task id="LOCAL-00024" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757882982816</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1757882982816</updated>
-    </task>
     <task id="LOCAL-00025" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
       <created>1757883073883</created>
@@ -462,7 +446,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758182991327</updated>
     </task>
-    <option name="localTasksCounter" value="72" />
+    <task id="LOCAL-00072" summary="Обновлены функции экспорта и импорта БД">
+      <option name="closed" value="true" />
+      <created>1758189467602</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1758189467603</updated>
+    </task>
+    <task id="LOCAL-00073" summary="Улучшено отображение сообщений во всплывающих окнах экспорта/импорта">
+      <option name="closed" value="true" />
+      <created>1758194500736</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1758194500736</updated>
+    </task>
+    <option name="localTasksCounter" value="74" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -481,6 +481,8 @@
     <MESSAGE value="Улучшена вкладка экзамена, реализованы импорт и экспорт БД" />
     <MESSAGE value="Исправлена ошибка переноса строк вопроса на вкладке экзамена" />
     <MESSAGE value="Исправлена ошибка сохранения БД" />
-    <option name="LAST_COMMIT_MESSAGE" value="Исправлена ошибка сохранения БД" />
+    <MESSAGE value="Обновлены функции экспорта и импорта БД" />
+    <MESSAGE value="Улучшено отображение сообщений во всплывающих окнах экспорта/импорта" />
+    <option name="LAST_COMMIT_MESSAGE" value="Улучшено отображение сообщений во всплывающих окнах экспорта/импорта" />
   </component>
 </project>

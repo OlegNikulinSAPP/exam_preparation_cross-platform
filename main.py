@@ -38,7 +38,7 @@ if platform == 'android':
                              Permission.READ_EXTERNAL_STORAGE,
                              Permission.MANAGE_EXTERNAL_STORAGE])
 
-        # Используем внутреннее хранилище приложения
+        # Используем внутреннее хранилище приложения для хранения вопросов
         storage_path = app_storage_path()
         data_dir = os.path.join(storage_path, 'data')
         if not os.path.exists(data_dir):
@@ -917,39 +917,50 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if platform == 'android':
-                # Получаем корневую директорию приложения на Android
-                from jnius import autoclass
+                # Используем специальный метод для экспорта на Android в папку загрузок
+                from jnius import autoclass, cast
                 from android import mActivity
 
+                # Получаем классы Java
+                Environment = autoclass('android.os.Environment')
                 Context = autoclass('android.content.Context')
-                context = mActivity.getApplicationContext()
+                ContentValues = autoclass('android.content.ContentValues')
+                MediaStore = autoclass('android.provider.MediaStore')
+                Uri = autoclass('android.net.Uri')
 
-                # Получаем путь к внутреннему хранилищу приложения
-                files_dir = context.getFilesDir()
-                internal_storage_path = files_dir.getAbsolutePath()
+                # Создаем контент значения для файла
+                values = ContentValues()
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, "questions_export.json")
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
 
-                # Сохраняем вопросы в корневую директорию приложения
-                export_path = os.path.join(internal_storage_path, 'questions_export.json')
+                # Получаем ContentResolver
+                resolver = mActivity.getContentResolver()
+                collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                uri = resolver.insert(collection, values)
 
-                with open(export_path, 'w', encoding='utf-8') as f:
-                    json.dump(questions, f, ensure_ascii=False, indent=2)
-
-                # Более краткое сообщение
-                self.show_popup("Успех",
-                                "База данных экспортирована во внутреннее хранилище приложения.\n\nФайл: questions_export.json")
+                if uri:
+                    # Открываем выходной поток и записываем данные
+                    output_stream = resolver.openOutputStream(uri)
+                    output_stream.write(json.dumps(questions, ensure_ascii=False, indent=2).encode('utf-8'))
+                    output_stream.close()
+                    self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
+                else:
+                    self.show_popup("Ошибка", "Не удалось создать файл для экспорта")
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
-                export_path = os.path.join(home_dir, 'questions_export.json')
+                export_path = os.path.join(home_dir, 'Downloads', 'questions_export.json')
+
+                # Создаем папку Downloads, если ее нет
+                os.makedirs(os.path.dirname(export_path), exist_ok=True)
 
                 # Сохраняем вопросы в файл экспорта
                 with open(export_path, 'w', encoding='utf-8') as f:
                     json.dump(questions, f, ensure_ascii=False, indent=2)
 
-                # Более краткое сообщение
-                self.show_popup("Успех", f"База данных экспортирована:\n{os.path.basename(export_path)}")
+                self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
         except Exception as e:
-            # Сокращаем сообщение об ошибке
             error_msg = str(e)
             if len(error_msg) > 100:
                 error_msg = error_msg[:100] + "..."
@@ -958,37 +969,51 @@ class EditQuestionsTab(BoxLayout):
     def import_database(self, instance):
         try:
             if platform == 'android':
-                # Получаем корневую директорию приложения на Android
-                from jnius import autoclass
+                # Используем специальный метод для импорта на Android из папки загрузок
+                from jnius import autoclass, cast
                 from android import mActivity
 
+                # Получаем классы Java
+                Environment = autoclass('android.os.Environment')
                 Context = autoclass('android.content.Context')
-                context = mActivity.getApplicationContext()
+                MediaStore = autoclass('android.provider.MediaStore')
+                Uri = autoclass('android.net.Uri')
 
-                # Получаем путь к внутреннему хранилищу приложения
-                files_dir = context.getFilesDir()
-                internal_storage_path = files_dir.getAbsolutePath()
+                # Получаем ContentResolver
+                resolver = mActivity.getContentResolver()
+                collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
-                # Ищем файл в корневой директории приложения
-                import_path = os.path.join(internal_storage_path, 'questions_export.json')
+                # Создаем запрос для поиска файла
+                projection = [MediaStore.Downloads._ID, MediaStore.Downloads.DISPLAY_NAME]
+                selection = MediaStore.Downloads.DISPLAY_NAME + " = ?"
+                selection_args = ["questions_export.json"]
 
-                # Проверяем существование файла импорта
-                if not os.path.exists(import_path):
-                    self.show_popup("Ошибка",
-                                    "Файл questions_export.json не найден во внутреннем хранилище приложения.")
+                # Выполняем запрос
+                cursor = resolver.query(collection, projection, selection, selection_args, None)
+
+                if cursor and cursor.moveToFirst():
+                    # Получаем ID файла
+                    id_index = cursor.getColumnIndex(MediaStore.Downloads._ID)
+                    file_id = cursor.getLong(id_index)
+
+                    # Получаем URI файла
+                    file_uri = Uri.withAppendedPath(collection, str(file_id))
+
+                    # Открываем входной поток и читаем данные
+                    input_stream = resolver.openInputStream(file_uri)
+                    imported_questions = json.load(input_stream)
+                    input_stream.close()
+                else:
+                    self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
                     return
-
-                # Загружаем вопросы из файла импорта
-                with open(import_path, 'r', encoding='utf-8') as f:
-                    imported_questions = json.load(f)
             else:
-                # На других платформах используем домашнюю директорию
+                # На других платформах используем папку загрузок
                 home_dir = os.path.expanduser("~")
-                import_path = os.path.join(home_dir, 'questions_export.json')
+                import_path = os.path.join(home_dir, 'Downloads', 'questions_export.json')
 
                 # Проверяем существование файла импорта
                 if not os.path.exists(import_path):
-                    self.show_popup("Ошибка", "Файл questions_export.json не найден в домашней директории.")
+                    self.show_popup("Ошибка", f"Файл questions_export.json не найден в папке Загрузки:\n{import_path}")
                     return
 
                 # Загружаем вопросы из файла импорта
@@ -1009,7 +1034,6 @@ class EditQuestionsTab(BoxLayout):
             else:
                 self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
         except Exception as e:
-            # Сокращаем сообщение об ошибке
             error_msg = str(e)
             if len(error_msg) > 100:
                 error_msg = error_msg[:100] + "..."
