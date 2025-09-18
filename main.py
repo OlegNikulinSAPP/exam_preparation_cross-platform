@@ -916,19 +916,56 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if platform == 'android':
-                from jnius import autoclass
-                from android import mActivity
+                # Используем интент для сохранения файла через системный файловый менеджер
+                from jnius import autoclass, cast
+                from android import mActivity, activity
+                from android.runnable import run_on_ui_thread
 
-                # Получаем путь к папке Downloads
-                Environment = autoclass('android.os.Environment')
-                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                export_path = os.path.join(str(downloads_dir), 'questions_export.json')
+                Intent = autoclass('android.content.Intent')
+                intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.setType("application/json")
+                intent.putExtra(Intent.EXTRA_TITLE, "questions_export.json")
 
-                # Сохраняем вопросы в файл экспорта
-                with open(export_path, 'w', encoding='utf-8') as f:
-                    json.dump(questions, f, ensure_ascii=False, indent=2)
+                # Запускаем интент для сохранения файла
+                @run_on_ui_thread
+                def start_file_saver():
+                    mActivity.startActivityForResult(intent, 124)
 
-                self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
+                start_file_saver()
+
+                # Обработчик результата сохранения файла
+                def on_activity_result(request_code, result_code, intent):
+                    if request_code == 124 and result_code == -1:  # -1 = RESULT_OK
+                        try:
+                            # Получаем URI для сохранения файла
+                            uri = intent.getData()
+
+                            # Открываем файл через ContentResolver
+                            ContentResolver = autoclass('android.content.ContentResolver')
+                            resolver = mActivity.getContentResolver()
+
+                            # Записываем данные в файл
+                            output_stream = resolver.openOutputStream(uri)
+                            from java.io import OutputStreamWriter, BufferedWriter
+                            writer = BufferedWriter(OutputStreamWriter(output_stream))
+
+                            # Записываем JSON
+                            writer.write(json.dumps(questions, ensure_ascii=False, indent=2))
+                            writer.close()
+                            output_stream.close()
+
+                            self.show_popup("Успех", "База данных успешно экспортирована!")
+
+                        except Exception as e:
+                            error_msg = str(e)
+                            if len(error_msg) > 100:
+                                error_msg = error_msg[:100] + "..."
+                            self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
+
+                # Регистрируем обработчик
+                activity.bind(on_activity_result=on_activity_result)
+
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
@@ -951,21 +988,76 @@ class EditQuestionsTab(BoxLayout):
     def import_database(self, instance):
         try:
             if platform == 'android':
-                from jnius import autoclass
+                # Используем интент для выбора файла через системный файловый менеджер
+                from jnius import autoclass, cast
+                from android import mActivity, activity
+                from android.runnable import run_on_ui_thread
 
-                # Получаем путь к папке Downloads
-                Environment = autoclass('android.os.Environment')
-                downloads_dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                import_path = os.path.join(str(downloads_dir), 'questions_export.json')
+                Intent = autoclass('android.content.Intent')
+                intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.setType("*/*")
 
-                # Проверяем существование файла импорта
-                if not os.path.exists(import_path):
-                    self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
-                    return
+                # Запускаем интент для выбора файла
+                @run_on_ui_thread
+                def start_file_picker():
+                    mActivity.startActivityForResult(intent, 123)
 
-                # Загружаем вопросы из файла импорта
-                with open(import_path, 'r', encoding='utf-8') as f:
-                    imported_questions = json.load(f)
+                start_file_picker()
+
+                # Обработчик результата выбора файла
+                def on_activity_result(request_code, result_code, intent):
+                    if request_code == 123 and result_code == -1:  # -1 = RESULT_OK
+                        try:
+                            # Получаем URI выбранного файла
+                            uri = intent.getData()
+
+                            # Открываем файл через ContentResolver
+                            ContentResolver = autoclass('android.content.ContentResolver')
+                            resolver = mActivity.getContentResolver()
+
+                            # Читаем содержимое файла
+                            input_stream = resolver.openInputStream(uri)
+                            from java.io import BufferedReader, InputStreamReader
+                            reader = BufferedReader(InputStreamReader(input_stream))
+
+                            # Считываем все содержимое
+                            content = []
+                            line = reader.readLine()
+                            while line is not None:
+                                content.append(line)
+                                line = reader.readLine()
+
+                            reader.close()
+                            input_stream.close()
+
+                            # Преобразуем в строку и парсим JSON
+                            json_content = '\n'.join(content)
+                            imported_questions = json.loads(json_content)
+
+                            # Проверяем валидность импортированных данных
+                            if not isinstance(imported_questions, list):
+                                self.show_popup("Ошибка", "Некорректный формат файла импорта")
+                                return
+
+                            # Сохраняем импортированные вопросы
+                            if save_questions(imported_questions):
+                                self.show_popup("Успех", "База данных успешно импортирована!")
+                                # Обновляем вопросы в приложении
+                                self.app.update_questions()
+                                self.load_questions()
+                            else:
+                                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+
+                        except Exception as e:
+                            error_msg = str(e)
+                            if len(error_msg) > 100:
+                                error_msg = error_msg[:100] + "..."
+                            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{error_msg}")
+
+                # Регистрируем обработчик
+                activity.bind(on_activity_result=on_activity_result)
+
             else:
                 # На других платформах используем папку загрузок
                 home_dir = os.path.expanduser("~")
@@ -980,19 +1072,19 @@ class EditQuestionsTab(BoxLayout):
                 with open(import_path, 'r', encoding='utf-8') as f:
                     imported_questions = json.load(f)
 
-            # Проверяем валидность импортированных данных
-            if not isinstance(imported_questions, list):
-                self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                return
+                # Проверяем валидность импортированных данных
+                if not isinstance(imported_questions, list):
+                    self.show_popup("Ошибка", "Некорректный формат файла импорта")
+                    return
 
-            # Сохраняем импортированные вопросы
-            if save_questions(imported_questions):
-                self.show_popup("Успех", "База данных успешно импортирована!")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+                # Сохраняем импортированные вопросы
+                if save_questions(imported_questions):
+                    self.show_popup("Успех", "База данных успешно импортирована!")
+                    # Обновляем вопросы в приложении
+                    self.app.update_questions()
+                    self.load_questions()
+                else:
+                    self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
         except Exception as e:
             error_msg = str(e)
             if len(error_msg) > 100:
