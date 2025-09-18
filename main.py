@@ -19,6 +19,7 @@ import os
 import json
 from kivy.logger import Logger
 import errno
+import time
 
 # Настройки окна для разных платформ
 Config.set('graphics', 'resizable', '1')
@@ -30,30 +31,23 @@ else:
 # Определяем путь к файлу в зависимости от платформы
 if platform == 'android':
     try:
-        from android.storage import app_storage_path, primary_external_storage_path
+        from android import mActivity
+        from android.storage import app_storage_path
         from android.permissions import request_permissions, Permission
 
         # Запрашиваем разрешения на запись во внешнее хранилище
         request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
 
-        # Используем внешнее хранилище для сохранения файла
-        storage_path = primary_external_storage_path()
-        data_dir = os.path.join(storage_path, 'Documents', 'ExamApp')
-
-        # Создаем директорию, если она не существует
-        try:
+        # Используем внутреннее хранилище приложения для лучшей совместимости
+        storage_path = app_storage_path()
+        data_dir = os.path.join(storage_path, 'data')
+        if not os.path.exists(data_dir):
             os.makedirs(data_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
         QUESTIONS_FILE = os.path.join(data_dir, 'questions.json')
-    except:
-        # Если что-то пошло не так, используем внутреннее хранилище
-        try:
-            QUESTIONS_FILE = os.path.join(app_storage_path(), 'questions.json')
-        except:
-            QUESTIONS_FILE = 'questions.json'
+    except Exception as e:
+        Logger.error(f"Android init error: {e}")
+        # Резервный путь
+        QUESTIONS_FILE = 'questions.json'
 else:
     # Для других платформ используем текущую директорию
     QUESTIONS_FILE = 'questions.json'
@@ -92,18 +86,23 @@ def load_questions():
 
 def save_questions(questions):
     """Сохраняет вопросы в файл"""
-    try:
-        # Создаем директорию, если она не существует
-        dir_name = os.path.dirname(QUESTIONS_FILE)
-        if dir_name and not os.path.exists(dir_name):
-            os.makedirs(dir_name)
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Создаем директорию, если она не существует
+            dir_name = os.path.dirname(QUESTIONS_FILE)
+            if dir_name and not os.path.exists(dir_name):
+                os.makedirs(dir_name)
 
-        with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(questions, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception as e:
-        Logger.error(f"Error saving questions: {e}")
-        return False
+            with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+            return True
+        except Exception as e:
+            Logger.error(f"Error saving questions (attempt {attempt + 1}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(0.1)  # Небольшая задержка перед повторной попыткой
+            else:
+                return False
 
 
 # Кастомное текстовое поле с автоматическим изменением высоты
@@ -144,8 +143,7 @@ class AutoHeightLabel(Label):
         # Вычисляем необходимую высоту на основе текста
         text_width = self.width - self.padding[0] - self.padding[2]
         lines = len(value.split('\n'))
-        # Для Label используем только line_height, без line_spacing
-        line_height = self.line_height
+        line_height = self.font_size * 1.2  # Примерная высота строки
         new_height = max(self.min_height, lines * line_height + self.padding[1] + self.padding[3])
 
         if new_height != self.height:
@@ -319,7 +317,7 @@ class AddQuestionTab(BoxLayout):
 
         # Сохраняем вопросы
         if not save_questions(questions):
-            self.show_popup("Ошибка", "Не удалось сохранить вопрос!")
+            self.show_popup("Ошибка", "Не удалось сохранить вопрос! Проверьте разрешения приложения.")
             return
 
         # Очищаем форму
@@ -357,42 +355,38 @@ class ExamTab(BoxLayout):
         self.current_question = None
         self.correct_indices = []
         self.checkboxes = []
-        self.option_labels = []
-        self.used_questions = set()
-        self.answered = False
-        self.answer_correct = False
-        self._initialized = False
+        self.option_labels = []  # Для хранения ссылок на метки вариантов
+        self.used_questions = set()  # Множество для отслеживания использованных вопросов
+        self.answered = False  # Флаг, указывающий, был ли дан ответ на текущий вопрос
+        self.answer_correct = False  # Флаг, указывающий, был ли ответ правильным
 
-        # Поле вопроса с улучшенным переносом текста
-        self.question_label = Label(
+        # Поле вопроса
+        self.question_label = AutoHeightLabel(
             text='Загрузка вопросов...',
             size_hint_y=None,
+            height=dp(150),
             text_size=(Window.width - dp(20), None),
             halign='left',
             valign='top',
-            font_size=dp(18),
+            font_size=dp(20),
             bold=True,
-            color=(1, 1, 1, 1),
-            padding=(dp(10), dp(10))
+            color=(1, 1, 1, 1)  # Черный цвет текста
         )
-        self.question_label.bind(
-            width=lambda *x: setattr(self.question_label, 'text_size', (self.question_label.width, None)),
-            texture_size=self.update_question_height
-        )
+        self.question_label.bind(size=self.question_label.setter('text_size'))
         self.add_widget(self.question_label)
 
         # Область для вариантов ответов
         options_label = Label(
-            text='Выберите все правильные ответы:',
+            text='Выберите правильные ответы:',
             size_hint_y=None,
             height=dp(30),
             font_size=dp(16),
-            color=(1, 1, 1, 1)
+            color=(1, 1, 1, 1)  # Черный цвет текста
         )
         self.add_widget(options_label)
 
         self.options_scroll = ScrollView(size_hint=(1, 0.6))
-        self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None, spacing=dp(5))
+        self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None, spacing=dp(10))  # Добавили spacing
         self.options_layout.bind(minimum_height=self.options_layout.setter('height'))
         self.options_scroll.add_widget(self.options_layout)
         self.add_widget(self.options_scroll)
@@ -414,25 +408,14 @@ class ExamTab(BoxLayout):
             height=dp(40),
             font_size=dp(16),
             bold=True,
-            color=(1, 1, 1, 1)
+            color=(0, 0, 0, 1)  # Черный цвет текста
         )
         self.add_widget(self.status_label)
 
-        # Отложенная загрузка вопроса после инициализации виджета
-        from kivy.clock import Clock
-        Clock.schedule_once(lambda dt: self.load_question(), 0.1)
-
-    def on_size(self, *args):
-        # При изменении размера перезагружаем вопрос для корректного отображения
-        if self._initialized:
-            from kivy.clock import Clock
-            Clock.schedule_once(lambda dt: self.load_question(), 0.1)
-
-    def update_question_height(self, instance, size):
-        instance.height = size[1] + dp(20)
-        instance.text_size = (instance.width, None)
+        self.load_question()
 
     def reset_session(self):
+        """Сбросить сессию и начать заново"""
         self.used_questions.clear()
         self.load_question()
 
@@ -447,6 +430,7 @@ class ExamTab(BoxLayout):
         self.answer_btn.text = 'Ответить'
         self.status_label.text = ''
 
+        # Загружаем вопросы
         questions = load_questions()
 
         if not questions:
@@ -454,6 +438,7 @@ class ExamTab(BoxLayout):
             self.answer_btn.disabled = True
             return
 
+        # Проверяем, остались ли неиспользованные вопросы
         available_questions = [q for q in questions if q['question'] not in self.used_questions]
 
         if not available_questions:
@@ -462,12 +447,16 @@ class ExamTab(BoxLayout):
             return
 
         self.answer_btn.disabled = False
+
+        # Выбираем случайный вопрос из доступных и перемешиваем варианты ответов
         self.current_question = random.choice(available_questions)
         self.used_questions.add(self.current_question['question'])
 
+        # Создаем перемешанный список вариантов ответов
         options_with_indices = list(enumerate(self.current_question['options']))
         random.shuffle(options_with_indices)
 
+        # Сохраняем правильные ответы в соответствии с новым порядком
         original_correct = [int(idx) - 1 for idx in self.current_question['correct']]
         self.correct_indices = []
 
@@ -475,36 +464,40 @@ class ExamTab(BoxLayout):
             if original_index in original_correct:
                 self.correct_indices.append(new_index)
 
-        self.question_label.text = self.current_question['question']
+        # Устанавливаем текст вопроса
+        if self.current_question:
+            self.question_label.text = self.current_question['question']
+        else:
+            self.question_label.text = "Ошибка загрузки вопроса"
+            return
 
+        # Создаем чекбоксы для вариантов ответов (в перемешанном порядке)
         for new_index, (original_index, option_text) in enumerate(options_with_indices):
-            # Создаем контейнер для варианта ответа
-            option_layout = BoxLayout(size_hint_y=None, spacing=dp(5))
-            checkbox = CheckBox(size_hint_x=0.15)
-            checkbox.disabled = self.answered
+            option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))  # Добавили spacing
 
-            # Создаем метку с правильными настройками переноса текста
-            label = Label(
+            checkbox = CheckBox(size_hint_x=0.2)
+            checkbox.disabled = self.answered  # Блокируем чекбоксы после ответа
+
+            # Используем AutoHeightLabel для автоматического изменения высоты
+            label = AutoHeightLabel(
                 text=option_text,
-                size_hint_x=0.85,
-                size_hint_y=None,
-                text_size=(self.width * 0.7, None),
+                text_size=(Window.width - dp(80), None),  # Уменьшили ширину для учета padding
                 halign='left',
                 valign='middle',
                 font_size=dp(16),
-                color=(1, 1, 1, 1),
-                padding=(dp(5), dp(5))
+                color=(0, 0, 0, 1),  # Черный цвет текста
+                min_height=dp(80),  # Минимальная высота для длинных ответов
+                padding_x=dp(10)  # Добавили горизонтальные отступы
             )
 
-            # Автоматически подстраиваем высоту метки под содержимое
-            def update_label_height(instance, texture_size):
-                instance.height = max(dp(60), texture_size[1] + dp(20))  # Увеличили минимальную высоту
+            # Добавляем белый фон только для текста ответа
+            with label.canvas.before:
+                Color(1, 1, 1, 1)  # Белый цвет
+                label.rect = Rectangle(pos=label.pos, size=label.size)
 
-            def update_layout_height(instance, height):
-                instance.parent.height = height + dp(10)  # Обновляем высоту родительского контейнера
-
-            label.bind(texture_size=update_label_height)
-            label.bind(height=lambda instance, height: update_layout_height(instance, height))
+            # Обновляем прямоугольник при изменении размера или позиции
+            label.bind(pos=self.update_label_rect, size=self.update_label_rect)
+            label.bind(size=label.setter('text_size'))
 
             option_layout.add_widget(checkbox)
             option_layout.add_widget(label)
@@ -512,23 +505,10 @@ class ExamTab(BoxLayout):
             self.checkboxes.append(checkbox)
             self.option_labels.append(label)
 
-        # Принудительно обновляем layout после добавления всех элементов
-        from kivy.clock import Clock
-        Clock.schedule_once(self.finalize_layout, 0.2)
-
-    def finalize_layout(self, dt):
-        """Финальная настройка layout после добавления всех элементов"""
-        for label in self.option_labels:
-            label.text_size = (label.width * 0.9, None)
-            # Принудительно обновляем текстуру
-            label.texture_update()
-            label.height = max(dp(60), label.texture_size[1] + dp(20))
-
-        # Обновляем минимальную высоту контейнера опций
-        total_height = sum(child.height for child in self.options_layout.children)
-        self.options_layout.height = total_height + dp(10 * len(self.options_layout.children))
-
-        self._initialized = True
+        # Добавьте новый метод для обновления прямоугольника фона текста
+    def update_label_rect(self, instance, value):
+        instance.rect.pos = instance.pos
+        instance.rect.size = instance.size
 
     def on_answer_btn_press(self, instance):
         if not self.answered:
@@ -536,6 +516,7 @@ class ExamTab(BoxLayout):
         else:
             self.load_question()
 
+    # В методе check_answer измените подсветку фона:
     def check_answer(self):
         selected_indices = []
         for i, checkbox in enumerate(self.checkboxes):
@@ -544,7 +525,7 @@ class ExamTab(BoxLayout):
 
         if not selected_indices:
             self.status_label.text = "Выберите хотя бы один ответ!"
-            self.status_label.color = (1, 0, 0, 1)
+            self.status_label.color = (1, 0, 0, 1)  # Красный цвет
             return
 
         # Блокируем чекбоксы после ответа
@@ -557,31 +538,40 @@ class ExamTab(BoxLayout):
         # Проверяем правильность ответа
         if set(selected_indices) == set(self.correct_indices):
             self.status_label.text = "Правильно!"
-            self.status_label.color = (0, 1, 0, 1)
+            self.status_label.color = (0, 1, 0, 1)  # Зеленый цвет
             self.answer_correct = True
 
-            # Подсвечиваем правильные ответы зеленым
+            # Подсвечиваем правильные ответы зеленым (только текст)
             for i in self.correct_indices:
+                self.option_labels[i].canvas.before.clear()
                 with self.option_labels[i].canvas.before:
-                    Color(0.7, 1, 0.7, 1)
+                    Color(0.7, 1, 0.7, 1)  # Светло-зеленый
                     Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
         else:
             self.status_label.text = "Неправильно!"
-            self.status_label.color = (1, 0, 0, 1)
+            self.status_label.color = (1, 0, 0, 1)  # Красный цвет
             self.answer_correct = False
 
-            # Подсвечиваем выбранные неправильные ответы красным
+            # Подсвечиваем выбранные неправильные ответы красным (только текст)
             for i in selected_indices:
                 if i not in self.correct_indices:
+                    self.option_labels[i].canvas.before.clear()
                     with self.option_labels[i].canvas.before:
-                        Color(1, 0.7, 0.7, 1)
+                        Color(1, 0.7, 0.7, 1)  # Светло-красный
                         Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
 
-            # Подсвечиваем правильные ответы зеленым
+            # Подсвечиваем правильные ответы зеленым (только текст)
             for i in self.correct_indices:
+                self.option_labels[i].canvas.before.clear()
                 with self.option_labels[i].canvas.before:
-                    Color(0.7, 1, 0.7, 1)
+                    Color(0.7, 1, 0.7, 1)  # Светло-зеленый
                     Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
+
+    def clear_options(self):
+        # Очищаем все виджеты и списки
+        self.options_layout.clear_widgets()
+        self.checkboxes = []
+        self.option_labels = []
 
 
 class EditQuestionsTab(BoxLayout):
@@ -622,7 +612,6 @@ class EditQuestionsTab(BoxLayout):
 
         # Кнопки экспорта и импорта
         export_import_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшили высоту и отступы
-        export_import_layout.size_hint_y = None
 
         self.export_btn = Button(
             text='Экспорт',
@@ -912,58 +901,63 @@ class EditQuestionsTab(BoxLayout):
 
     def export_database(self, instance):
         try:
+            # Загружаем текущие вопросы
+            questions = load_questions()
+
             if platform == 'android':
+                # На Android используем специальный путь для экспорта
                 from android.storage import primary_external_storage_path
-                export_path = primary_external_storage_path()
-                export_file = os.path.join(export_path, 'Documents', 'exam_backup.json')
-
-                # Создаем папку, если она не существует
-                os.makedirs(os.path.dirname(export_file), exist_ok=True)
-
-                # Копируем файл
-                if os.path.exists(QUESTIONS_FILE):
-                    with open(QUESTIONS_FILE, 'r', encoding='utf-8') as src:
-                        data = json.load(src)
-                    with open(export_file, 'w', encoding='utf-8') as dst:
-                        json.dump(data, dst, ensure_ascii=False, indent=2)
-                    self.show_popup("Успех", f"База экспортирована в:\n{export_file}")
-                else:
-                    self.show_popup("Ошибка", "Нет данных для экспорта")
+                export_dir = os.path.join(primary_external_storage_path(), 'Documents')
+                if not os.path.exists(export_dir):
+                    os.makedirs(export_dir)
+                export_path = os.path.join(export_dir, 'questions_export.json')
             else:
-                # Для других платформ просто показываем информацию
-                self.show_popup("Информация", f"База данных находится в файле:\n{QUESTIONS_FILE}")
+                # На других платформах используем домашнюю директорию
+                home_dir = os.path.expanduser("~")
+                export_path = os.path.join(home_dir, 'questions_export.json')
+
+            # Сохраняем вопросы в файл экспорта
+            with open(export_path, 'w', encoding='utf-8') as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+
+            self.show_popup("Успех", f"База данных экспортирована в:\n{export_path}")
         except Exception as e:
             self.show_popup("Ошибка", f"Не удалось экспортировать базу: {str(e)}")
 
     def import_database(self, instance):
         try:
             if platform == 'android':
+                # На Android используем специальный путь для импорта
                 from android.storage import primary_external_storage_path
-                import_path = primary_external_storage_path()
-                import_file = os.path.join(import_path, 'Documents', 'exam_backup.json')
-
-                if os.path.exists(import_file):
-                    with open(import_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-
-                    # Проверяем, что данные являются списком вопросов
-                    if not isinstance(data, list):
-                        self.show_popup("Ошибка", "Неверный формат файла импорта!")
-                        return
-
-                    # Сохраняем импортированные данные
-                    if not save_questions(data):
-                        self.show_popup("Ошибка", "Не удалось импортировать базу!")
-                        return
-
-                    self.show_popup("Успех", "База успешно импортирована!")
-                    self.load_questions()
-                    self.app.update_questions()
-                else:
-                    self.show_popup("Ошибка", "Файл для импорта не найден")
+                import_dir = os.path.join(primary_external_storage_path(), 'Documents')
+                import_path = os.path.join(import_dir, 'questions_export.json')
             else:
-                # Для других платформ просто показываем информацию
-                self.show_popup("Информация", "Для импорта скопируйте файл базы данных в:\n" + QUESTIONS_FILE)
+                # На других платформах используем домашнюю директорию
+                home_dir = os.path.expanduser("~")
+                import_path = os.path.join(home_dir, 'questions_export.json')
+
+            # Проверяем существование файла импорта
+            if not os.path.exists(import_path):
+                self.show_popup("Ошибка", f"Файл для импорта не найден:\n{import_path}")
+                return
+
+            # Загружаем вопросы из файла импорта
+            with open(import_path, 'r', encoding='utf-8') as f:
+                imported_questions = json.load(f)
+
+            # Проверяем валидность импортированных данных
+            if not isinstance(imported_questions, list):
+                self.show_popup("Ошибка", "Некорректный формат файла импорта")
+                return
+
+            # Сохраняем импортированные вопросы
+            if save_questions(imported_questions):
+                self.show_popup("Успех", "База данных успешно импортирована!")
+                # Обновляем вопросы в приложении
+                self.app.update_questions()
+                self.load_questions()
+            else:
+                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
         except Exception as e:
             self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
 
