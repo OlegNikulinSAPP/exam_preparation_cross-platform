@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="63530516-6621-4d53-b9ad-36a2e8b1fb60" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/exam_preparation_cross-platform.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -69,14 +70,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1757776160256</updated>
-    </task>
-    <task id="LOCAL-00020" summary="Изменен buildozer.spec">
-      <option name="closed" value="true" />
-      <created>1757881613753</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1757881613753</updated>
     </task>
     <task id="LOCAL-00021" summary="Изменен buildozer.spec">
       <option name="closed" value="true" />
@@ -462,7 +455,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758118761555</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="Улучшена вкладка экзамена, реализованы импорт и экспорт БД">
+      <option name="closed" value="true" />
+      <created>1758173957320</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1758173957320</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -478,6 +479,7 @@
     <MESSAGE value="New сборка с часовым поясом и подтверждением" />
     <MESSAGE value="Бульдозер" />
     <MESSAGE value="Реализация подсветки вопросов цветом при ответе" />
-    <option name="LAST_COMMIT_MESSAGE" value="Реализация подсветки вопросов цветом при ответе" />
+    <MESSAGE value="Улучшена вкладка экзамена, реализованы импорт и экспорт БД" />
+    <option name="LAST_COMMIT_MESSAGE" value="Улучшена вкладка экзамена, реализованы импорт и экспорт БД" />
   </component>
 </project>

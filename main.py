@@ -8,7 +8,6 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
-from kivy.storage.jsonstore import JsonStore
 from kivy.metrics import dp
 from kivy.properties import NumericProperty, ObjectProperty
 from kivy.utils import platform
@@ -18,7 +17,6 @@ import random
 import os
 import json
 from kivy.logger import Logger
-import errno
 import time
 
 # Настройки окна для разных платформ
@@ -31,9 +29,9 @@ else:
 # Определяем путь к файлу в зависимости от платформы
 if platform == 'android':
     try:
-        from android import mActivity
-        from android.storage import app_storage_path
-        from android.permissions import request_permissions, Permission
+        from android import mActivity  # type: ignore
+        from android.storage import app_storage_path  # type: ignore
+        from android.permissions import request_permissions, Permission  # type: ignore
 
         # Запрашиваем разрешения на запись во внешнее хранилище
         request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
@@ -135,24 +133,34 @@ class AutoHeightLabel(Label):
     min_height = NumericProperty(dp(40))
 
     def __init__(self, **kwargs):
+        # Извлекаем padding_x и padding_y из kwargs, если они есть
+        self.padding_x = kwargs.pop('padding_x', 0)
+        self.padding_y = kwargs.pop('padding_y', 0)
         super().__init__(**kwargs)
         self.bind(text=self.on_text_change)
         self.height = self.min_height
 
     def on_text_change(self, instance, value):
-        # Вычисляем необходимую высоту на основе текста
-        text_width = self.width - self.padding[0] - self.padding[2]
-        lines = len(value.split('\n'))
-        line_height = self.font_size * 1.2  # Примерная высота строки
-        new_height = max(self.min_height, lines * line_height + self.padding[1] + self.padding[3])
+        # Вычисляем необходимую высоту на основе текста с учетом отступов
+        text_width = self.width - self.padding_x * 2
+        if text_width <= 0:
+            return
+
+        # Создаем временный текстур для расчета высоты
+        from kivy.core.text import Label as CoreLabel
+        core_label = CoreLabel(
+            text=self.text,
+            font_size=self.font_size,
+            font_name=self.font_name,
+            text_size=(text_width, None)
+        )
+        core_label.refresh()
+
+        # Вычисляем высоту с учетом отступов
+        new_height = max(self.min_height, core_label.texture.height + self.padding_y * 2)
 
         if new_height != self.height:
             self.height = new_height
-            # Обновляем layout родительского контейнера
-            if self.parent:
-                self.parent.height = new_height
-                if hasattr(self.parent.parent, 'height'):
-                    self.parent.parent.height = new_height
 
 
 class ExamApp(App):
@@ -355,38 +363,42 @@ class ExamTab(BoxLayout):
         self.current_question = None
         self.correct_indices = []
         self.checkboxes = []
-        self.option_labels = []  # Для хранения ссылок на метки вариантов
-        self.used_questions = set()  # Множество для отслеживания использованных вопросов
-        self.answered = False  # Флаг, указывающий, был ли дан ответ на текущий вопрос
-        self.answer_correct = False  # Флаг, указывающий, был ли ответ правильным
+        self.option_labels = []
+        self.used_questions = set()
+        self.answered = False
+        self.answer_correct = False
 
-        # Поле вопроса
+        # Поле вопроса с ScrollView для длинных вопросов
+        question_scroll = ScrollView(size_hint_y=None, height=dp(150))
         self.question_label = AutoHeightLabel(
             text='Загрузка вопросов...',
             size_hint_y=None,
-            height=dp(150),
-            text_size=(Window.width - dp(20), None),
+            text_size=(Window.width - dp(30), None),  # Учитываем padding скролла
             halign='left',
             valign='top',
-            font_size=dp(20),
+            font_size=dp(18),  # Немного уменьшили шрифт для лучшего отображения
             bold=True,
-            color=(1, 1, 1, 1)  # Черный цвет текста
+            color=(1, 1, 0, 1),
+            min_height=dp(150),
+            padding_x=dp(10),  # Добавили отступы
+            padding_y=dp(10)
         )
         self.question_label.bind(size=self.question_label.setter('text_size'))
-        self.add_widget(self.question_label)
+        question_scroll.add_widget(self.question_label)
+        self.add_widget(question_scroll)
 
         # Область для вариантов ответов
         options_label = Label(
-            text='Выберите правильные ответы:',
+            text='Выберите все правильные ответы:',
             size_hint_y=None,
             height=dp(30),
             font_size=dp(16),
-            color=(1, 1, 1, 1)  # Черный цвет текста
+            color=(0, 0, 0, 1)
         )
         self.add_widget(options_label)
 
         self.options_scroll = ScrollView(size_hint=(1, 0.6))
-        self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None, spacing=dp(10))  # Добавили spacing
+        self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None, spacing=dp(10))
         self.options_layout.bind(minimum_height=self.options_layout.setter('height'))
         self.options_scroll.add_widget(self.options_layout)
         self.add_widget(self.options_scroll)
@@ -408,7 +420,7 @@ class ExamTab(BoxLayout):
             height=dp(40),
             font_size=dp(16),
             bold=True,
-            color=(0, 0, 0, 1)  # Черный цвет текста
+            color=(0, 0, 0, 1)
         )
         self.add_widget(self.status_label)
 
@@ -686,10 +698,10 @@ class EditQuestionsTab(BoxLayout):
             btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(2))  # Уменьшили отступы
 
             edit_btn = Button(text='Ред.', size_hint_x=0.5, font_size=dp(12))  # Меньший шрифт
-            edit_btn.bind(on_press=lambda instance, idx=idx: self.edit_question(idx, questions))
+            edit_btn.bind(on_press=lambda instance, current_idx=idx: self.edit_question(current_idx, questions))
 
             delete_btn = Button(text='Удл.', size_hint_x=0.5, font_size=dp(12))  # Меньший шрифт
-            delete_btn.bind(on_press=lambda instance, idx=idx: self.delete_question(idx, questions))
+            delete_btn.bind(on_press=lambda instance, current_idx=idx: self.delete_question(current_idx, questions))
 
             btn_layout.add_widget(edit_btn)
             btn_layout.add_widget(delete_btn)
@@ -906,7 +918,7 @@ class EditQuestionsTab(BoxLayout):
 
             if platform == 'android':
                 # На Android используем специальный путь для экспорта
-                from android.storage import primary_external_storage_path
+                from android.storage import primary_external_storage_path  # type: ignore
                 export_dir = os.path.join(primary_external_storage_path(), 'Documents')
                 if not os.path.exists(export_dir):
                     os.makedirs(export_dir)
@@ -928,7 +940,7 @@ class EditQuestionsTab(BoxLayout):
         try:
             if platform == 'android':
                 # На Android используем специальный путь для импорта
-                from android.storage import primary_external_storage_path
+                from android.storage import primary_external_storage_path  # type: ignore
                 import_dir = os.path.join(primary_external_storage_path(), 'Documents')
                 import_path = os.path.join(import_dir, 'questions_export.json')
             else:
