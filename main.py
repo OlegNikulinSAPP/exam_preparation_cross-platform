@@ -917,34 +917,26 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if platform == 'android':
-                # Используем ContentResolver для создания файла в Downloads
-                from jnius import autoclass, cast
+                # Получаем корневую директорию приложения на Android
+                from jnius import autoclass
                 from android import mActivity
 
-                # Получаем классы Java
-                Environment = autoclass('android.os.Environment')
                 Context = autoclass('android.content.Context')
-                ContentValues = autoclass('android.content.ContentValues')
-                ContentResolver = autoclass('android.content.ContentResolver')
+                context = mActivity.getApplicationContext()
 
-                # Создаем контент значения для файла
-                values = ContentValues()
-                values.put("_display_name", "questions_export.json")
-                values.put("mime_type", "application/json")
+                # Получаем путь к внутреннему хранилищу приложения
+                files_dir = context.getFilesDir()
+                internal_storage_path = files_dir.getAbsolutePath()
 
-                # Получаем URI для сохранения файла в Downloads
-                resolver = mActivity.getContentResolver()
-                downloads_uri = autoclass('android.provider.MediaStore$Downloads').getContentUri("external")
-                file_uri = resolver.insert(downloads_uri, values)
+                # Сохраняем вопросы в корневую директорию приложения
+                export_path = os.path.join(internal_storage_path, 'questions_export.json')
 
-                if file_uri:
-                    # Открываем выходной поток и записываем данные
-                    output_stream = resolver.openOutputStream(file_uri)
-                    output_stream.write(json.dumps(questions, ensure_ascii=False, indent=2).encode('utf-8'))
-                    output_stream.close()
-                    self.show_popup("Успех", "База данных экспортирована в папку Загрузки")
-                else:
-                    self.show_popup("Ошибка", "Не удалось создать файл для экспорта")
+                with open(export_path, 'w', encoding='utf-8') as f:
+                    json.dump(questions, f, ensure_ascii=False, indent=2)
+
+                # Более краткое сообщение
+                self.show_popup("Успех",
+                                "База данных экспортирована во внутреннее хранилище приложения.\n\nФайл: questions_export.json")
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
@@ -954,34 +946,41 @@ class EditQuestionsTab(BoxLayout):
                 with open(export_path, 'w', encoding='utf-8') as f:
                     json.dump(questions, f, ensure_ascii=False, indent=2)
 
-                self.show_popup("Успех", f"База данных экспортирована в:\n{export_path}")
+                # Более краткое сообщение
+                self.show_popup("Успех", f"База данных экспортирована:\n{os.path.basename(export_path)}")
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось экспортировать базу: {str(e)}")
+            # Сокращаем сообщение об ошибке
+            error_msg = str(e)
+            if len(error_msg) > 100:
+                error_msg = error_msg[:100] + "..."
+            self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
 
     def import_database(self, instance):
         try:
             if platform == 'android':
-                # Запускаем интент для выбора файла
-                from jnius import autoclass, cast
+                # Получаем корневую директорию приложения на Android
+                from jnius import autoclass
                 from android import mActivity
 
-                Intent = autoclass('android.content.Intent')
-                intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("application/json")
+                Context = autoclass('android.content.Context')
+                context = mActivity.getApplicationContext()
 
-                # Запускаем интент и ждем результат
-                from android import activity
-                from android.runnable import run_on_ui_thread
+                # Получаем путь к внутреннему хранилищу приложения
+                files_dir = context.getFilesDir()
+                internal_storage_path = files_dir.getAbsolutePath()
 
-                @run_on_ui_thread
-                def start_file_picker():
-                    mActivity.startActivityForResult(intent, 123)
+                # Ищем файл в корневой директории приложения
+                import_path = os.path.join(internal_storage_path, 'questions_export.json')
 
-                # Обработка результата будет сложной и требует дополнительной логики
-                # Для упрощения предлагаем использовать другой подход
-                self.show_popup("Информация",
-                                "Для импорта поместите файл questions_export.json в корневую директорию приложения и перезапустите его")
+                # Проверяем существование файла импорта
+                if not os.path.exists(import_path):
+                    self.show_popup("Ошибка",
+                                    "Файл questions_export.json не найден во внутреннем хранилище приложения.")
+                    return
+
+                # Загружаем вопросы из файла импорта
+                with open(import_path, 'r', encoding='utf-8') as f:
+                    imported_questions = json.load(f)
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
@@ -989,36 +988,67 @@ class EditQuestionsTab(BoxLayout):
 
                 # Проверяем существование файла импорта
                 if not os.path.exists(import_path):
-                    self.show_popup("Ошибка", f"Файл для импорта не найден:\n{import_path}")
+                    self.show_popup("Ошибка", "Файл questions_export.json не найден в домашней директории.")
                     return
 
                 # Загружаем вопросы из файла импорта
                 with open(import_path, 'r', encoding='utf-8') as f:
                     imported_questions = json.load(f)
 
-                # Проверяем валидность импортированных данных
-                if not isinstance(imported_questions, list):
-                    self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                    return
+            # Проверяем валидность импортированных данных
+            if not isinstance(imported_questions, list):
+                self.show_popup("Ошибка", "Некорректный формат файла импорта")
+                return
 
-                # Сохраняем импортированные вопросы
-                if save_questions(imported_questions):
-                    self.show_popup("Успех", "База данных успешно импортирована!")
-                    # Обновляем вопросы в приложении
-                    self.app.update_questions()
-                    self.load_questions()
-                else:
-                    self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+            # Сохраняем импортированные вопросы
+            if save_questions(imported_questions):
+                self.show_popup("Успех", "База данных успешно импортирована!")
+                # Обновляем вопросы в приложении
+                self.app.update_questions()
+                self.load_questions()
+            else:
+                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+            # Сокращаем сообщение об ошибке
+            error_msg = str(e)
+            if len(error_msg) > 100:
+                error_msg = error_msg[:100] + "..."
+            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{error_msg}")
 
     def show_popup(self, title, message):
+        # Создаем ScrollView для длинных сообщений
+        scroll = ScrollView(size_hint=(1, 0.8))
+
+        # Уменьшаем размер шрифта для лучшего отображения
+        label = Label(
+            text=message,
+            font_size=dp(14),  # Уменьшенный размер шрифта
+            text_size=(Window.width * 0.7, None),
+            halign='left',
+            valign='top',
+            size_hint_y=None
+        )
+        label.bind(texture_size=label.setter('size'))
+
+        scroll.add_widget(label)
+
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
-        popup_layout.add_widget(Label(text=message, font_size=dp(16)))
-        close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
-        popup = Popup(title=title, content=popup_layout, size_hint=(0.8, 0.4))
-        close_btn.bind(on_press=popup.dismiss)
+        popup_layout.add_widget(scroll)
+
+        close_btn = Button(
+            text='OK',
+            size_hint_y=None,
+            height=dp(40),
+            font_size=dp(16)
+        )
         popup_layout.add_widget(close_btn)
+
+        popup = Popup(
+            title=title,
+            content=popup_layout,
+            size_hint=(0.9, 0.7)  # Увеличили размер попапа
+        )
+        close_btn.bind(on_press=popup.dismiss)
         popup.open()
 
 
