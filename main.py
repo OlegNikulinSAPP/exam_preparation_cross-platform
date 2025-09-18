@@ -53,7 +53,7 @@ else:
 def load_questions():
     """Загружает вопросы из файла с проверкой формата"""
     try:
-        if os.path.exists(QUESTIONS_FILE):
+        if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
             with open(QUESTIONS_FILE, 'r', encoding='utf-8') as f:
                 questions = json.load(f)
 
@@ -68,7 +68,10 @@ def load_questions():
                 if (isinstance(item, dict) and
                         'question' in item and
                         'options' in item and
-                        'correct' in item):
+                        'correct' in item and
+                        isinstance(item['options'], list) and
+                        isinstance(item['correct'], list) and
+                        len(item['options']) >= 2):
                     valid_questions.append(item)
                 else:
                     Logger.warning(f"Invalid question format: {item}")
@@ -93,14 +96,18 @@ def save_questions(questions):
 
             with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
                 json.dump(questions, f, ensure_ascii=False, indent=2)
-            return True
+
+            # Проверяем, что файл был создан и содержит данные
+            if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
+                return True
+            else:
+                return False
         except Exception as e:
             Logger.error(f"Error saving questions (attempt {attempt + 1}): {e}")
             if attempt < max_retries - 1:
-                time.sleep(0.1)  # Небольшая задержка перед повторной попыткой
+                time.sleep(0.1)
             else:
                 return False
-
 
 # Кастомное текстовое поле с автоматическим изменением высоты
 class AutoHeightTextInput(TextInput):
@@ -996,7 +1003,7 @@ class EditQuestionsTab(BoxLayout):
                 Intent = autoclass('android.content.Intent')
                 intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("*/*")
+                intent.setType("application/json")
 
                 # Запускаем интент для выбора файла
                 @run_on_ui_thread
@@ -1018,31 +1025,26 @@ class EditQuestionsTab(BoxLayout):
 
                             # Читаем содержимое файла
                             input_stream = resolver.openInputStream(uri)
-                            from java.io import BufferedReader, InputStreamReader
-                            reader = BufferedReader(InputStreamReader(input_stream))
 
-                            # Считываем все содержимое
-                            content = []
-                            line = reader.readLine()
-                            while line is not None:
-                                content.append(line)
-                                line = reader.readLine()
-
+                            # Читаем содержимое файла с помощью Python
+                            import io
+                            reader = io.BufferedReader(io.InputStreamReader(input_stream))
+                            content = reader.read()
                             reader.close()
                             input_stream.close()
 
-                            # Преобразуем в строку и парсим JSON
-                            json_content = '\n'.join(content)
-                            imported_questions = json.loads(json_content)
+                            # Парсим JSON
+                            imported_questions = json.loads(content)
 
                             # Проверяем валидность импортированных данных
-                            if not isinstance(imported_questions, list):
+                            if not self.validate_questions(imported_questions):
                                 self.show_popup("Ошибка", "Некорректный формат файла импорта")
                                 return
 
                             # Сохраняем импортированные вопросы
                             if save_questions(imported_questions):
-                                self.show_popup("Успех", "База данных успешно импортирована!")
+                                self.show_popup("Успех",
+                                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
                                 # Обновляем вопросы в приложении
                                 self.app.update_questions()
                                 self.load_questions()
@@ -1073,13 +1075,14 @@ class EditQuestionsTab(BoxLayout):
                     imported_questions = json.load(f)
 
                 # Проверяем валидность импортированных данных
-                if not isinstance(imported_questions, list):
+                if not self.validate_questions(imported_questions):
                     self.show_popup("Ошибка", "Некорректный формат файла импорта")
                     return
 
                 # Сохраняем импортированные вопросы
                 if save_questions(imported_questions):
-                    self.show_popup("Успех", "База данных успешно импортирована!")
+                    self.show_popup("Успех",
+                                    f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
                     # Обновляем вопросы в приложении
                     self.app.update_questions()
                     self.load_questions()
@@ -1090,6 +1093,23 @@ class EditQuestionsTab(BoxLayout):
             if len(error_msg) > 100:
                 error_msg = error_msg[:100] + "..."
             self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{error_msg}")
+
+    def validate_questions(self, questions):
+        """Проверяет, что импортированные данные имеют правильный формат"""
+        if not isinstance(questions, list):
+            return False
+
+        for question in questions:
+            if not isinstance(question, dict):
+                return False
+            if 'question' not in question or 'options' not in question or 'correct' not in question:
+                return False
+            if not isinstance(question['options'], list) or not isinstance(question['correct'], list):
+                return False
+            if len(question['options']) < 2:
+                return False
+
+        return True
 
     def show_popup(self, title, message):
         # Создаем ScrollView для длинных сообщений
