@@ -53,6 +53,8 @@ else:
 def load_questions():
     """Загружает вопросы из файла с проверкой формата"""
     try:
+        Logger.info(f"Trying to load questions from: {QUESTIONS_FILE}")
+
         if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
             with open(QUESTIONS_FILE, 'r', encoding='utf-8') as f:
                 questions = json.load(f)
@@ -68,16 +70,15 @@ def load_questions():
                 if (isinstance(item, dict) and
                         'question' in item and
                         'options' in item and
-                        'correct' in item and
-                        isinstance(item['options'], list) and
-                        isinstance(item['correct'], list) and
-                        len(item['options']) >= 2):
+                        'correct' in item):
                     valid_questions.append(item)
                 else:
                     Logger.warning(f"Invalid question format: {item}")
 
+            Logger.info(f"Loaded {len(valid_questions)} valid questions")
             return valid_questions
         else:
+            Logger.warning("Questions file doesn't exist or is empty")
             return []
     except Exception as e:
         Logger.error(f"Error loading questions: {e}")
@@ -99,8 +100,11 @@ def save_questions(questions):
 
             # Проверяем, что файл был создан и содержит данные
             if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
+                Logger.info(f"Questions saved successfully to: {QUESTIONS_FILE}")
+                Logger.info(f"Number of questions saved: {len(questions)}")
                 return True
             else:
+                Logger.error("Failed to save questions: file is empty or doesn't exist")
                 return False
         except Exception as e:
             Logger.error(f"Error saving questions (attempt {attempt + 1}): {e}")
@@ -202,6 +206,15 @@ class ExamApp(App):
             self.exam_content.reset_session()
         if hasattr(self, 'edit_content'):
             self.edit_content.load_questions()
+        if hasattr(self, 'add_content'):
+            # Очищаем форму добавления вопроса
+            self.add_content.question_input.text = ''
+            for checkbox, text_input in self.add_content.option_widgets:
+                checkbox.active = False
+                text_input.text = ''
+            # Оставляем только два варианта
+            while len(self.add_content.option_widgets) > 2:
+                self.add_content.remove_option(None)
 
 
 class AddQuestionTab(BoxLayout):
@@ -661,6 +674,32 @@ class EditQuestionsTab(BoxLayout):
 
         self.load_questions()
 
+        # Кнопка проверки состояния базы
+        self.check_db_btn = Button(
+            text='Проверить состояние базы',
+            size_hint_y=None,
+            height=dp(40),
+            font_size=dp(12)
+        )
+        self.check_db_btn.bind(on_press=self.check_database_status)
+        self.add_widget(self.check_db_btn)
+
+    def check_database_status(self, instance):
+        """Проверяет состояние базы данных и показывает информацию"""
+        questions = load_questions()
+        db_path = QUESTIONS_FILE
+        db_exists = os.path.exists(db_path)
+        db_size = os.path.getsize(db_path) if db_exists else 0
+
+        message = f"""
+        Путь к базе: {db_path}
+        Файл существует: {'Да' if db_exists else 'Нет'}
+        Размер файла: {db_size} байт
+        Количество вопросов: {len(questions)}
+        """
+
+        self.show_popup("Состояние базы данных", message)
+
     def reset_exam_session(self, instance):
         """Сбросить сессию экзамена"""
         if hasattr(self.app, 'exam_content'):
@@ -1003,7 +1042,8 @@ class EditQuestionsTab(BoxLayout):
                 Intent = autoclass('android.content.Intent')
                 intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("application/json")
+                intent.setType("*/*")  # Разрешаем все типы файлов
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
 
                 # Запускаем интент для выбора файла
                 @run_on_ui_thread
@@ -1028,23 +1068,41 @@ class EditQuestionsTab(BoxLayout):
 
                             # Читаем содержимое файла с помощью Python
                             import io
-                            reader = io.BufferedReader(io.InputStreamReader(input_stream))
-                            content = reader.read()
+                            reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
+                            content = []
+                            line = reader.readLine()
+                            while line is not None:
+                                content.append(line)
+                                line = reader.readLine()
                             reader.close()
                             input_stream.close()
 
-                            # Парсим JSON
-                            imported_questions = json.loads(content)
+                            # Объединяем строки и парсим JSON
+                            json_content = '\n'.join(content)
+                            imported_questions = json.loads(json_content)
 
                             # Проверяем валидность импортированных данных
-                            if not self.validate_questions(imported_questions):
+                            if not isinstance(imported_questions, list):
                                 self.show_popup("Ошибка", "Некорректный формат файла импорта")
                                 return
 
+                            # Проверяем каждый вопрос на валидность
+                            valid_questions = []
+                            for question in imported_questions:
+                                if (isinstance(question, dict) and
+                                        'question' in question and
+                                        'options' in question and
+                                        'correct' in question):
+                                    valid_questions.append(question)
+
+                            if not valid_questions:
+                                self.show_popup("Ошибка", "В файле нет валидных вопросов")
+                                return
+
                             # Сохраняем импортированные вопросы
-                            if save_questions(imported_questions):
+                            if save_questions(valid_questions):
                                 self.show_popup("Успех",
-                                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
+                                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
                                 # Обновляем вопросы в приложении
                                 self.app.update_questions()
                                 self.load_questions()
@@ -1052,62 +1110,84 @@ class EditQuestionsTab(BoxLayout):
                                 self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
 
                         except Exception as e:
-                            error_msg = str(e)
-                            if len(error_msg) > 100:
-                                error_msg = error_msg[:100] + "..."
-                            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{error_msg}")
+                            import traceback
+                            error_msg = traceback.format_exc()
+                            Logger.error(f"Import error: {error_msg}")
+                            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
 
                 # Регистрируем обработчик
                 activity.bind(on_activity_result=on_activity_result)
 
             else:
-                # На других платформах используем папку загрузок
-                home_dir = os.path.expanduser("~")
-                import_path = os.path.join(home_dir, 'Downloads', 'questions_export.json')
+                # На других платформах используем диалог выбора файла
+                from tkinter import Tk, filedialog
 
-                # Проверяем существование файла импорта
-                if not os.path.exists(import_path):
-                    self.show_popup("Ошибка", f"Файл questions_export.json не найден в папке Загрузки:\n{import_path}")
-                    return
+                root = Tk()
+                root.withdraw()  # Скрываем основное окно
+                root.attributes('-topmost', True)  # Поверх всех окон
+
+                file_path = filedialog.askopenfilename(
+                    title="Выберите файл с вопросами",
+                    filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+                )
+
+                root.destroy()
+
+                if not file_path:
+                    return  # Пользователь отменил выбор
 
                 # Загружаем вопросы из файла импорта
-                with open(import_path, 'r', encoding='utf-8') as f:
+                with open(file_path, 'r', encoding='utf-8') as f:
                     imported_questions = json.load(f)
 
                 # Проверяем валидность импортированных данных
-                if not self.validate_questions(imported_questions):
+                if not isinstance(imported_questions, list):
                     self.show_popup("Ошибка", "Некорректный формат файла импорта")
                     return
 
+                # Проверяем каждый вопрос на валидность
+                valid_questions = []
+                for question in imported_questions:
+                    if (isinstance(question, dict) and
+                            'question' in question and
+                            'options' in question and
+                            'correct' in question):
+                        valid_questions.append(question)
+
+                if not valid_questions:
+                    self.show_popup("Ошибка", "В файле нет валидных вопросов")
+                    return
+
                 # Сохраняем импортированные вопросы
-                if save_questions(imported_questions):
+                if save_questions(valid_questions):
                     self.show_popup("Успех",
-                                    f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
+                                    f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
                     # Обновляем вопросы в приложении
                     self.app.update_questions()
                     self.load_questions()
                 else:
                     self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
         except Exception as e:
-            error_msg = str(e)
-            if len(error_msg) > 100:
-                error_msg = error_msg[:100] + "..."
-            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{error_msg}")
+            import traceback
+            error_msg = traceback.format_exc()
+            Logger.error(f"Import error: {error_msg}")
+            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
 
-    def validate_questions(self, questions):
-        """Проверяет, что импортированные данные имеют правильный формат"""
-        if not isinstance(questions, list):
+    def validate_question_format(self, question):
+        """Проверяет, что вопрос имеет правильный формат"""
+        if not isinstance(question, dict):
             return False
 
-        for question in questions:
-            if not isinstance(question, dict):
+        required_fields = ['question', 'options', 'correct']
+        for field in required_fields:
+            if field not in question:
                 return False
-            if 'question' not in question or 'options' not in question or 'correct' not in question:
-                return False
-            if not isinstance(question['options'], list) or not isinstance(question['correct'], list):
-                return False
-            if len(question['options']) < 2:
-                return False
+
+        if not isinstance(question['options'], list) or len(question['options']) < 2:
+            return False
+
+        if not isinstance(question['correct'], list) or len(question['correct']) == 0:
+            return False
 
         return True
 
