@@ -39,8 +39,8 @@ if platform == 'android':
         from jnius import autoclass
 
         # Запрашиваем разрешения
-        request_permissions([Permission.WRITE_EXTERNAL_STORAGE,
-                             Permission.READ_EXTERNAL_STORAGE])
+        request_permissions([Permission.READ_EXTERNAL_STORAGE,
+                             Permission.WRITE_EXTERNAL_STORAGE])
 
         # Используем внутреннее хранилище приложения
         storage_path = app_storage_path()
@@ -1040,60 +1040,53 @@ class EditQuestionsTab(BoxLayout):
     def import_database(self, instance):
         try:
             if platform == 'android':
-                # Используем интент для выбора файла через системный файловый менеджер
-                from jnius import autoclass, cast
-                from android import mActivity, activity
+                from android import activity
+                from jnius import autoclass
                 from android.runnable import run_on_ui_thread
 
                 Intent = autoclass('android.content.Intent')
-                intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                IntentACTION_OPEN_DOCUMENT = autoclass('android.content.Intent').ACTION_OPEN_DOCUMENT
+                IntentCATEGORY_OPENABLE = autoclass('android.content.Intent').CATEGORY_OPENABLE
+
+                intent = Intent(IntentACTION_OPEN_DOCUMENT)
+                intent.addCategory(IntentCATEGORY_OPENABLE)
                 intent.setType("*/*")
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
 
-                # Запускаем интент для выбора файла
-                @run_on_ui_thread
-                def start_file_picker():
-                    mActivity.startActivityForResult(intent, 123)
-
-                start_file_picker()
-
-                # Обработчик результата выбора файла
+                # Создаем слушатель для результата активности
                 def on_activity_result(request_code, result_code, intent):
-                    if request_code == 123 and result_code == -1:  # -1 = RESULT_OK
+                    # Проверяем, что это наш запрос
+                    if request_code != 123:
+                        return
+
+                    if result_code == -1:  # RESULT_OK
                         try:
-                            # Получаем URI выбранного файла
                             uri = intent.getData()
+                            self.show_popup("Информация", "Файл выбран, обрабатываем...")
 
-                            # Открываем файл через ContentResolver
+                            # Чтение файла
                             ContentResolver = autoclass('android.content.ContentResolver')
-                            resolver = mActivity.getContentResolver()
-
-                            # Читаем содержимое файла
+                            resolver = autoclass('android.app.Activity').mActivity.getContentResolver()
                             input_stream = resolver.openInputStream(uri)
 
-                            # Читаем содержимое файла с помощью Python
-                            import io
-                            reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
+                            # Читаем содержимое файла
+                            from java.io import BufferedReader, InputStreamReader
+                            reader = BufferedReader(InputStreamReader(input_stream, "UTF-8"))
                             content = []
                             line = reader.readLine()
                             while line is not None:
                                 content.append(line)
                                 line = reader.readLine()
-
                             reader.close()
                             input_stream.close()
 
-                            # Объединяем строки и парсим JSON
                             json_content = '\n'.join(content)
                             imported_questions = json.loads(json_content)
 
-                            # Проверяем валидность импортированных данных
                             if not isinstance(imported_questions, list):
                                 self.show_popup("Ошибка", "Некорректный формат файла импорта")
                                 return
 
-                            # Проверяем каждый вопрос на валидность
                             valid_questions = []
                             for question in imported_questions:
                                 if (isinstance(question, dict) and
@@ -1106,59 +1099,45 @@ class EditQuestionsTab(BoxLayout):
                                 self.show_popup("Ошибка", "В файле нет валидных вопросов")
                                 return
 
-                            # Сохраняем импортированные вопросы
                             if save_questions(valid_questions):
-                                self.show_popup("Успех",
-                                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                                # Обновляем вопросы в приложении
+                                self.show_popup("Успех", f"Импортировано вопросов: {len(valid_questions)}")
                                 self.app.update_questions()
                                 self.load_questions()
                             else:
-                                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+                                self.show_popup("Ошибка", "Не удалось сохранить базу")
 
-                        except json.JSONDecodeError as e:
-                            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
                         except Exception as e:
-                            import traceback
-                            error_msg = traceback.format_exc()
-                            Logger.error(f"Import error: {error_msg}")
-                            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
+                            self.show_popup("Ошибка", f"Ошибка при импорте: {str(e)}")
                     else:
-                        self.show_popup("Информация", "Выбор файла отменен")
+                        self.show_popup("Информация", "Импорт отменен")
 
-                # Регистрируем обработчик
+                # Регистрируем слушатель
                 activity.bind(on_activity_result=on_activity_result)
 
-            else:
-                # Для других платформ используем стандартный диалог выбора файла
-                from tkinter import Tk, filedialog
+                # Запускаем интент
+                current_activity = autoclass('org.kivy.android.PythonActivity').mActivity
+                current_activity.startActivityForResult(intent, 123)
 
+            else:
+                # Код для других платформ
+                from tkinter import Tk, filedialog
                 root = Tk()
                 root.withdraw()
-                root.attributes('-topmost', True)
-
-                file_path = filedialog.askopenfilename(
-                    title="Выберите файл с вопросами",
-                    filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-                )
-
+                file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
                 root.destroy()
 
                 if not file_path:
-                    self.show_popup("Информация", "Выбор файла отменен")
+                    self.show_popup("Информация", "Импорт отменен")
                     return
 
                 try:
-                    # Загружаем вопросы из файла импорта
                     with open(file_path, 'r', encoding='utf-8') as f:
                         imported_questions = json.load(f)
 
-                    # Проверяем валидность импортированных данных
                     if not isinstance(imported_questions, list):
                         self.show_popup("Ошибка", "Некорректный формат файла импорта")
                         return
 
-                    # Проверяем каждый вопрос на валидность
                     valid_questions = []
                     for question in imported_questions:
                         if (isinstance(question, dict) and
@@ -1171,30 +1150,18 @@ class EditQuestionsTab(BoxLayout):
                         self.show_popup("Ошибка", "В файле нет валидных вопросов")
                         return
 
-                    # Сохраняем импортированные вопросы
                     if save_questions(valid_questions):
-                        self.show_popup("Успех",
-                                        f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                        # Обновляем вопросы в приложении
+                        self.show_popup("Успех", f"Импортировано вопросов: {len(valid_questions)}")
                         self.app.update_questions()
                         self.load_questions()
                     else:
-                        self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+                        self.show_popup("Ошибка", "Не удалось сохранить базу")
 
-                except json.JSONDecodeError as e:
-                    self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
                 except Exception as e:
-                    import traceback
-                    error_msg = traceback.format_exc()
-                    Logger.error(f"Import error: {error_msg}")
-                    self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
+                    self.show_popup("Ошибка", f"Ошибка при импорте: {str(e)}")
 
         except Exception as e:
-            import traceback
-            error_msg = traceback.format_exc()
-            Logger.error(f"Import error: {error_msg}")
-            self.show_popup("Ошибка", f"Не удалось запустить импорт:\n{str(e)}")
-
+            self.show_popup("Ошибка", f"Не удалось запустить импорт: {str(e)}")
     def validate_question_format(self, question):
         """Проверяет, что вопрос имеет правильный формат"""
         if not isinstance(question, dict):
