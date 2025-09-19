@@ -19,6 +19,11 @@ import json
 from kivy.logger import Logger
 import time
 
+# В начале файла добавьте настройки логирования
+import logging
+logging.basicConfig(level=logging.DEBUG)
+Logger = logging.getLogger('ExamApp')
+
 # Настройки окна для разных платформ
 Config.set('graphics', 'resizable', '1')
 if platform in ('win', 'linux', 'macosx', 'unknown'):
@@ -684,6 +689,7 @@ class EditQuestionsTab(BoxLayout):
         self.check_db_btn.bind(on_press=self.check_database_status)
         self.add_widget(self.check_db_btn)
 
+    # В класс EditQuestionsTab добавьте метод для проверки состояния базы
     def check_database_status(self, instance):
         """Проверяет состояние базы данных и показывает информацию"""
         questions = load_questions()
@@ -1034,15 +1040,15 @@ class EditQuestionsTab(BoxLayout):
     def import_database(self, instance):
         try:
             if platform == 'android':
-                # Используем интент для выбора файла через системный файловый менеджер
-                from jnius import autoclass, cast
+                # Используем системный файловый менеджер для выбора файла
                 from android import mActivity, activity
+                from jnius import autoclass
                 from android.runnable import run_on_ui_thread
 
                 Intent = autoclass('android.content.Intent')
                 intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("*/*")  # Разрешаем все типы файлов
+                intent.setType("*/*")
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
 
                 # Запускаем интент для выбора файла
@@ -1069,17 +1075,12 @@ class EditQuestionsTab(BoxLayout):
                             # Читаем содержимое файла с помощью Python
                             import io
                             reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
-                            content = []
-                            line = reader.readLine()
-                            while line is not None:
-                                content.append(line)
-                                line = reader.readLine()
+                            content = reader.read()
                             reader.close()
                             input_stream.close()
 
-                            # Объединяем строки и парсим JSON
-                            json_content = '\n'.join(content)
-                            imported_questions = json.loads(json_content)
+                            # Парсим JSON
+                            imported_questions = json.loads(content)
 
                             # Проверяем валидность импортированных данных
                             if not isinstance(imported_questions, list):
@@ -1119,12 +1120,12 @@ class EditQuestionsTab(BoxLayout):
                 activity.bind(on_activity_result=on_activity_result)
 
             else:
-                # На других платформах используем диалог выбора файла
+                # Для других платформ используем стандартный диалог выбора файла
                 from tkinter import Tk, filedialog
 
                 root = Tk()
-                root.withdraw()  # Скрываем основное окно
-                root.attributes('-topmost', True)  # Поверх всех окон
+                root.withdraw()
+                root.attributes('-topmost', True)
 
                 file_path = filedialog.askopenfilename(
                     title="Выберите файл с вопросами",
@@ -1134,7 +1135,7 @@ class EditQuestionsTab(BoxLayout):
                 root.destroy()
 
                 if not file_path:
-                    return  # Пользователь отменил выбор
+                    return
 
                 # Загружаем вопросы из файла импорта
                 with open(file_path, 'r', encoding='utf-8') as f:
