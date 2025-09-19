@@ -36,6 +36,10 @@ else:
 if platform == 'android':
     try:
         from android.storage import app_storage_path
+        from android.permissions import request_permissions, Permission
+
+        # Запрашиваем разрешения
+        request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
 
         # Используем внутреннее хранилище приложения
         storage_path = app_storage_path()
@@ -949,29 +953,181 @@ class EditQuestionsTab(BoxLayout):
             # Загружаем текущие вопросы
             questions = load_questions()
 
+            if not questions:
+                self.show_popup("Ошибка", "Нет вопросов для экспорта")
+                return
+
             if platform == 'android':
-                self.show_popup("Ошибка", "Экспорт на Android временно недоступен")
+                self._export_android(questions)
             else:
-                # На других платформах используем домашнюю директорию
-                home_dir = os.path.expanduser("~")
-                export_path = os.path.join(home_dir, 'Downloads', 'questions_export.json')
+                self._export_desktop(questions)
 
-                # Создаем папку Downloads, если ее нет
-                os.makedirs(os.path.dirname(export_path), exist_ok=True)
-
-                # Сохраняем вопросы в файл экспорта
-                with open(export_path, 'w', encoding='utf-8') as f:
-                    json.dump(questions, f, ensure_ascii=False, indent=2)
-
-                self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
         except Exception as e:
             error_msg = str(e)
             if len(error_msg) > 100:
                 error_msg = error_msg[:100] + "..."
             self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
 
+    def _export_android(self, questions):
+        """Экспорт для Android"""
+        try:
+            from android.storage import primary_external_storage_path
+
+            # Путь к папке Загрузки на Android
+            downloads_path = os.path.join(primary_external_storage_path(), "Download")
+            export_path = os.path.join(downloads_path, "questions_export.json")
+
+            # Создаем папку Download, если ее нет
+            if not os.path.exists(downloads_path):
+                os.makedirs(downloads_path)
+
+            # Сохраняем вопросы в файл экспорта
+            with open(export_path, 'w', encoding='utf-8') as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+
+            self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
+
+        except Exception as e:
+            self.show_popup("Ошибка", f"Не удалось экспортировать на Android: {str(e)}")
+
+    def _export_desktop(self, questions):
+        """Экспорт для Desktop"""
+        try:
+            # На других платформах используем домашнюю директорию
+            home_dir = os.path.expanduser("~")
+            downloads_path = os.path.join(home_dir, 'Downloads')
+
+            # Создаем папку Downloads, если ее нет
+            if not os.path.exists(downloads_path):
+                os.makedirs(downloads_path)
+
+            export_path = os.path.join(downloads_path, 'questions_export.json')
+
+            # Сохраняем вопросы в файл экспорта
+            with open(export_path, 'w', encoding='utf-8') as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+
+            self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
+        except Exception as e:
+            self.show_popup("Ошибка", f"Не удалось экспортировать на Desktop: {str(e)}")
+
     def import_database(self, instance):
-        self.show_popup("Ошибка", "Импорт на Android временно недоступен")
+        try:
+            if platform == 'android':
+                self._import_android()
+            else:
+                self._import_desktop()
+        except Exception as e:
+            self.show_popup("Ошибка", f"Ошибка при запуске импорта: {str(e)}")
+
+    def _import_android(self):
+        """Импорт для Android платформы"""
+        try:
+            from android.storage import primary_external_storage_path
+
+            # Путь к папке Загрузки на Android
+            downloads_path = os.path.join(primary_external_storage_path(), "Download")
+            import_path = os.path.join(downloads_path, "questions_export.json")
+
+            if not os.path.exists(import_path):
+                self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
+                return
+
+            self.show_popup("Информация", "Файл найден, начинаем импорт...")
+
+            # Загружаем вопросы из файла импорта
+            with open(import_path, 'r', encoding='utf-8') as f:
+                imported_questions = json.load(f)
+
+            # Проверяем валидность импортированных данных
+            if not self._validate_imported_questions(imported_questions):
+                return
+
+            # Сохраняем импортированные вопросы
+            if save_questions(imported_questions):
+                self.show_popup("Успех",
+                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
+                # Обновляем вопросы в приложении
+                self.app.update_questions()
+                self.load_questions()
+            else:
+                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+
+        except json.JSONDecodeError as e:
+            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
+        except Exception as e:
+            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+
+    def _import_desktop(self):
+        """Импорт для Desktop платформы"""
+        try:
+            # Для Desktop используем стандартный диалог выбора файла
+            from tkinter import Tk, filedialog
+
+            root = Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+
+            # Начинаем поиск в папке Загрузки
+            downloads_path = os.path.join(os.path.expanduser("~"), 'Downloads')
+
+            file_path = filedialog.askopenfilename(
+                initialdir=downloads_path,
+                title="Выберите файл с вопросами",
+                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+            )
+
+            root.destroy()
+
+            if not file_path:
+                self.show_popup("Информация", "Выбор файла отменен")
+                return
+
+            self.show_popup("Информация", "Файл выбран, обрабатываем...")
+
+            # Загружаем вопросы из файла импорта
+            with open(file_path, 'r', encoding='utf-8') as f:
+                imported_questions = json.load(f)
+
+            # Проверяем валидность импортированных данных
+            if not self._validate_imported_questions(imported_questions):
+                return
+
+            # Сохраняем импортированные вопросы
+            if save_questions(imported_questions):
+                self.show_popup("Успех",
+                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
+                # Обновляем вопросы в приложении
+                self.app.update_questions()
+                self.load_questions()
+            else:
+                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+
+        except json.JSONDecodeError as e:
+            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
+        except Exception as e:
+            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+
+    def _validate_imported_questions(self, imported_questions):
+        """Проверяет валидность импортированных вопросов"""
+        if not isinstance(imported_questions, list):
+            self.show_popup("Ошибка", "Некорректный формат файла импорта")
+            return False
+
+        # Проверяем каждый вопрос на валидность
+        valid_questions = []
+        for question in imported_questions:
+            if (isinstance(question, dict) and
+                    'question' in question and
+                    'options' in question and
+                    'correct' in question):
+                valid_questions.append(question)
+
+        if not valid_questions:
+            self.show_popup("Ошибка", "В файле нет валидных вопросов")
+            return False
+
+        return True
 
     def show_popup(self, title, message):
         # Создаем ScrollView для длинных сообщений
