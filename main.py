@@ -1075,9 +1075,15 @@ class EditQuestionsTab(BoxLayout):
 
         try:
             if platform == 'android':
-                self._import_android()
+                if hasattr(self, '_import_android'):
+                    self._import_android()
+                else:
+                    self.show_popup("Ошибка", "Метод импорта для Android не реализован")
             else:
-                self._import_desktop()
+                if hasattr(self, '_import_desktop'):
+                    self._import_desktop()
+                else:
+                    self.show_popup("Ошибка", "Метод импорта для Desktop не реализован")
         except Exception as e:
             self.show_popup("Ошибка", f"Ошибка при запуске импорта: {str(e)}")
 
@@ -1137,6 +1143,68 @@ class EditQuestionsTab(BoxLayout):
 
         except Exception as e:
             self.show_popup("Ошибка", f"Ошибка при запуске файлового менеджера: {str(e)}")
+
+    def _import_desktop(self):
+        """Импорт для Desktop платформы"""
+        try:
+            # Для Desktop используем стандартный диалог выбора файла
+            from tkinter import Tk, filedialog
+
+            root = Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+
+            file_path = filedialog.askopenfilename(
+                title="Выберите файл с вопросами",
+                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+            )
+
+            root.destroy()
+
+            if not file_path:
+                self.show_popup("Информация", "Выбор файла отменен")
+                return
+
+            self.show_popup("Информация", "Файл выбран, обрабатываем...")
+
+            # Загружаем вопросы из файла импорта
+            with open(file_path, 'r', encoding='utf-8') as f:
+                imported_questions = json.load(f)
+
+            # Проверяем валидность импортированных данных
+            if not isinstance(imported_questions, list):
+                self.show_popup("Ошибка", "Некорректный формат файла импорта")
+                return
+
+            # Проверяем каждый вопрос на валидность
+            valid_questions = []
+            for question in imported_questions:
+                if (isinstance(question, dict) and
+                        'question' in question and
+                        'options' in question and
+                        'correct' in question):
+                    valid_questions.append(question)
+
+            if not valid_questions:
+                self.show_popup("Ошибка", "В файле нет валидных вопросов")
+                return
+
+            self.show_popup("Информация", "Формат проверен, сохраняем...")
+
+            # Сохраняем импортированные вопросы
+            if save_questions(valid_questions):
+                self.show_popup("Успех",
+                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
+                # Обновляем вопросы в приложении
+                self.app.update_questions()
+                self.load_questions()
+            else:
+                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+
+        except json.JSONDecodeError as e:
+            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
+        except Exception as e:
+            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
 
     def _process_android_file(self, uri):
         """Обработка выбранного файла на Android"""
