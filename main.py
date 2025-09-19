@@ -225,8 +225,9 @@ class ExamApp(App):
             try:
                 from android import activity
                 activity.bind(on_activity_result=self.on_activity_result)
+                self.show_popup("Информация", "Обработчик файлов зарегистрирован")
             except ImportError:
-                pass
+                self.show_popup("Ошибка", "Не удалось зарегистрировать обработчик файлов")
 
     def on_activity_result(self, request_code, result_code, intent):
         """Обработчик результата выбора файла на Android"""
@@ -236,21 +237,24 @@ class ExamApp(App):
                     # Получаем URI выбранного файла
                     uri = intent.getData()
                     if not uri:
+                        self.show_popup("Ошибка", "Не удалось получить URI файла")
                         return
+
+                    # Показываем сообщение о начале обработки
+                    self.show_popup("Информация", "Файл выбран, начинаем обработку...")
 
                     # Передаем URI в текущую вкладку редактирования
                     if hasattr(self, 'tabs'):
                         for tab in self.tabs.tab_list:
                             if hasattr(tab, 'content') and hasattr(tab.content, '_process_android_file'):
-                                tab.content._process_android_file(uri)
+                                # Вызываем обработку файла с задержкой, чтобы попап успел показаться
+                                from kivy.clock import Clock
+                                Clock.schedule_once(lambda dt: tab.content._process_android_file(uri), 0.5)
                                 break
                 except Exception as e:
-                    # Показываем ошибку в текущей вкладке
-                    if hasattr(self, 'tabs'):
-                        for tab in self.tabs.tab_list:
-                            if hasattr(tab, 'content') and hasattr(tab.content, 'show_popup'):
-                                tab.content.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
-                                break
+                    self.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
+            else:
+                self.show_popup("Информация", "Выбор файла отменен")
 
 
 class AddQuestionTab(BoxLayout):
@@ -1106,8 +1110,8 @@ class EditQuestionsTab(BoxLayout):
             # Запускаем интент для выбора файла
             activity.startActivityForResult(intent, 123)
 
-            # Сохраняем ссылку на текущий экземпляр для использования в обработчике
-            self._import_instance = self
+            # Показываем сообщение о выборе файла
+            self.show_popup("Информация", "Выберите файл с вопросами...")
 
         except Exception as e:
             self.show_popup("Ошибка", f"Ошибка при запуске файлового менеджера: {str(e)}")
@@ -1177,8 +1181,7 @@ class EditQuestionsTab(BoxLayout):
     def _process_android_file(self, uri):
         """Обработка выбранного файла на Android"""
         try:
-            from jnius import autoclass
-            from android import mActivity
+            from jnius import autocolass
 
             # Получаем текущую активность
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
@@ -1237,6 +1240,7 @@ class EditQuestionsTab(BoxLayout):
             self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
         except Exception as e:
             self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+
     def validate_question_format(self, question):
         """Проверяет, что вопрос имеет правильный формат"""
         if not isinstance(question, dict):
