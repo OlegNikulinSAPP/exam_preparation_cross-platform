@@ -19,29 +19,27 @@ import json
 from kivy.logger import Logger
 import time
 
-# В начале файла добавьте настройки логирования
+# Настройки логирования
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 Logger = logging.getLogger('ExamApp')
 
-# Настройки окна для разных платформ
+# Настройки окна
 Config.set('graphics', 'resizable', '1')
 if platform in ('win', 'linux', 'macosx', 'unknown'):
     Window.size = (400, 600)
 else:
     Window.fullscreen = 'auto'
 
+# Определяем путь к файлу вопросов
 if platform == 'android':
     try:
-        from android import mActivity
         from android.storage import app_storage_path
-        from android.permissions import request_permissions, check_permission, Permission
-        from jnius import autoclass
+        from android.permissions import request_permissions, Permission
 
-        # Проверяем разрешения на чтение и запись
-        if not check_permission(Permission.READ_EXTERNAL_STORAGE) or \
-           not check_permission(Permission.WRITE_EXTERNAL_STORAGE):
-            request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+        # Запрашиваем разрешения
+        request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
 
         # Используем внутреннее хранилище приложения
         storage_path = app_storage_path()
@@ -58,35 +56,13 @@ else:
 
 
 def load_questions():
-    """Загружает вопросы из файла с проверкой формата"""
+    """Загружает вопросы из файла"""
     try:
-        Logger.info(f"Trying to load questions from: {QUESTIONS_FILE}")
-
         if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
             with open(QUESTIONS_FILE, 'r', encoding='utf-8') as f:
                 questions = json.load(f)
-
-            # Проверяем, что questions является списком
-            if not isinstance(questions, list):
-                Logger.error(f"Invalid questions format: {type(questions)}")
-                return []
-
-            # Фильтруем только валидные вопросы
-            valid_questions = []
-            for item in questions:
-                if (isinstance(item, dict) and
-                        'question' in item and
-                        'options' in item and
-                        'correct' in item):
-                    valid_questions.append(item)
-                else:
-                    Logger.warning(f"Invalid question format: {item}")
-
-            Logger.info(f"Loaded {len(valid_questions)} valid questions")
-            return valid_questions
-        else:
-            Logger.warning("Questions file doesn't exist or is empty")
-            return []
+            return questions
+        return []
     except Exception as e:
         Logger.error(f"Error loading questions: {e}")
         return []
@@ -94,27 +70,16 @@ def load_questions():
 
 def save_questions(questions):
     """Сохраняет вопросы в файл"""
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            # Создаем директорию, если она не существует
-            dir_name = os.path.dirname(QUESTIONS_FILE)
-            if dir_name and not os.path.exists(dir_name):
-                os.makedirs(dir_name)
+    try:
+        # Создаем директорию если нужно
+        os.makedirs(os.path.dirname(QUESTIONS_FILE), exist_ok=True)
 
-            with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(questions, f, ensure_ascii=False, indent=2)
-
-            # Проверяем, что файл был создан и содержит данные
-            if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
-                return True
-            else:
-                return False
-        except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(0.1)
-            else:
-                return False
+        with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        Logger.error(f"Error saving questions: {e}")
+        return False
 
 # Кастомное текстовое поле с автоматическим изменением высоты
 class AutoHeightTextInput(TextInput):
@@ -177,29 +142,27 @@ class AutoHeightLabel(Label):
 
 
 class ExamApp(App):
-    questions_updated = ObjectProperty(None)
-
     def build(self):
         # Создаем панель с вкладками
         self.tabs = TabbedPanel(do_default_tab=False)
 
         # Вкладка добавления вопросов
-        add_tab = TabbedPanelItem(text='Добавить\nвопрос')
+        add_tab = TabbedPanelItem(text='Добавить вопрос')
         self.add_content = AddQuestionTab(app=self)
         add_tab.add_widget(self.add_content)
         self.tabs.add_widget(add_tab)
-
-        # Вкладка редактирования вопросов
-        edit_tab = TabbedPanelItem(text='Редактировать\nвопросы')
-        self.edit_content = EditQuestionsTab(app=self)
-        edit_tab.add_widget(self.edit_content)
-        self.tabs.add_widget(edit_tab)
 
         # Вкладка экзамена
         exam_tab = TabbedPanelItem(text='Экзамен')
         self.exam_content = ExamTab(app=self)
         exam_tab.add_widget(self.exam_content)
         self.tabs.add_widget(exam_tab)
+
+        # Вкладка редактирования
+        edit_tab = TabbedPanelItem(text='Редактировать')
+        self.edit_content = EditQuestionsTab(app=self)
+        edit_tab.add_widget(self.edit_content)
+        self.tabs.add_widget(edit_tab)
 
         return self.tabs
 
