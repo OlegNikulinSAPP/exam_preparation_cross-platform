@@ -1,0 +1,64 @@
+# Установка зависимостей
+!apt update
+!apt install -y python3-pip git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+!pip install buildozer cython virtualenv
+
+# Создаем папку проекта
+!mkdir -p exam_preparation_cross-platform
+%cd exam_preparation_cross-platform
+
+# Клонируем репозиторий
+!git clone https://github.com/OlegNikulinSAPP/exam_preparation_cross-platform.git .
+
+# Инициализируем Buildozer с автоматическим подтверждением
+!yes | buildozer init
+
+# Обновляем buildozer.spec для добавления разрешений
+!sed -i '/^android.permissions/d' buildozer.spec
+!echo 'android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE' >> buildozer.spec
+
+!sed -i '/^android.api/d' buildozer.spec
+!echo 'android.api = 29' >> buildozer.spec
+
+!sed -i '/^android.minapi/d' buildozer.spec
+!echo 'android.minapi = 21' >> buildozer.spec
+
+!sed -i '/^android.ndk/d' buildozer.spec
+!echo 'android.ndk = 21e' >> buildozer.spec
+
+# Обновляем buildozer.spec (дополнительные настройки)
+!sed -i 's/android.arch = .*/android.archs = armeabi-v7a/' buildozer.spec
+
+# Добавляем настройку времени ожидания сборки
+!echo 'build_timeout = 7200' >> buildozer.spec  # 2 часа
+
+# Добавляем настройку версии Python
+!echo 'p4a.python = 3.8' >> buildozer.spec  # Более стабильная версия
+
+# Создаем swap-файл для увеличения доступной памяти
+!fallocate -l 2G /swapfile
+!chmod 600 /swapfile
+!mkswap /swapfile
+!swapon /swapfile
+
+# Удаляем старые файлы сборки, если они есть
+!rm -rf .buildozer
+
+# Запускаем сборку с автоматическим подтверждением
+!timeout 7200 yes | buildozer android debug  # Ограничиваем время выполнения 2 часами
+
+# Скачиваем APK
+from google.colab import files
+import glob
+
+# Ищем APK файлы
+apk_files = glob.glob('bin/*.apk')
+if apk_files:
+    files.download(apk_files[0])
+else:
+    print("APK файл не найден. Проверьте логи сборки.")
+    # Показываем последние строки лога для диагностики
+    if os.path.exists('.buildozer/android/platform/build-armeabi-v7a/build.log'):
+        !tail -50 .buildozer/android/platform/build-armeabi-v7a/build.log
+    else:
+        print("Файл лога не существует")

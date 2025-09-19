@@ -36,10 +36,6 @@ else:
 if platform == 'android':
     try:
         from android.storage import app_storage_path
-        from android.permissions import request_permissions, Permission
-
-        # Запрашиваем разрешения
-        request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
 
         # Используем внутреннее хранилище приложения
         storage_path = app_storage_path()
@@ -47,6 +43,7 @@ if platform == 'android':
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         QUESTIONS_FILE = os.path.join(data_dir, 'questions.json')
+        Logger.info(f"Android data path: {QUESTIONS_FILE}")
 
     except Exception as e:
         Logger.error(f"Android init error: {e}")
@@ -58,10 +55,13 @@ else:
 def load_questions():
     """Загружает вопросы из файла"""
     try:
+        Logger.info(f"Loading questions from: {QUESTIONS_FILE}")
         if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
             with open(QUESTIONS_FILE, 'r', encoding='utf-8') as f:
                 questions = json.load(f)
+            Logger.info(f"Loaded {len(questions)} questions")
             return questions
+        Logger.info("No questions file found or file is empty")
         return []
     except Exception as e:
         Logger.error(f"Error loading questions: {e}")
@@ -71,15 +71,26 @@ def load_questions():
 def save_questions(questions):
     """Сохраняет вопросы в файл"""
     try:
-        # Создаем директорию если нужно
-        os.makedirs(os.path.dirname(QUESTIONS_FILE), exist_ok=True)
+        Logger.info(f"Saving {len(questions)} questions to: {QUESTIONS_FILE}")
+        # Создаем директорию, если она не существует
+        dir_name = os.path.dirname(QUESTIONS_FILE)
+        if dir_name and not os.path.exists(dir_name):
+            os.makedirs(dir_name)
 
         with open(QUESTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(questions, f, ensure_ascii=False, indent=2)
-        return True
+
+        # Проверяем, что файл был создан и содержит данные
+        if os.path.exists(QUESTIONS_FILE) and os.path.getsize(QUESTIONS_FILE) > 0:
+            Logger.info("Questions saved successfully")
+            return True
+        else:
+            Logger.error("Failed to save questions")
+            return False
     except Exception as e:
         Logger.error(f"Error saving questions: {e}")
         return False
+
 
 # Кастомное текстовое поле с автоматическим изменением высоты
 class AutoHeightTextInput(TextInput):
@@ -182,42 +193,14 @@ class ExamApp(App):
             while len(self.add_content.option_widgets) > 2:
                 self.add_content.remove_option(None)
 
-    def on_start(self):
-        # Регистрируем обработчик результата выбора файла
-        if platform == 'android':
-            try:
-                from android import activity
-                activity.bind(on_activity_result=self.on_activity_result)
-                self.show_popup("Информация", "Обработчик файлов зарегистрирован")
-            except ImportError:
-                self.show_popup("Ошибка", "Не удалось зарегистрировать обработчик файлов")
-
-    def on_activity_result(self, request_code, result_code, intent):
-        """Обработчик результата выбора файла на Android"""
-        if request_code == 123:  # Наш код запроса
-            if result_code == -1:  # RESULT_OK
-                try:
-                    # Получаем URI выбранного файла
-                    uri = intent.getData()
-                    if not uri:
-                        self.show_popup("Ошибка", "Не удалось получить URI файла")
-                        return
-
-                    # Показываем сообщение о начале обработки
-                    self.show_popup("Информация", "Файл выбран, начинаем обработку...")
-
-                    # Передаем URI в текущую вкладку редактирования
-                    if hasattr(self, 'tabs'):
-                        for tab in self.tabs.tab_list:
-                            if hasattr(tab, 'content') and hasattr(tab.content, '_process_android_file'):
-                                # Вызываем обработку файла с задержкой, чтобы попап успел показаться
-                                from kivy.clock import Clock
-                                Clock.schedule_once(lambda dt: tab.content._process_android_file(uri), 0.5)
-                                break
-                except Exception as e:
-                    self.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
-            else:
-                self.show_popup("Информация", "Выбор файла отменен")
+    def show_popup(self, title, message):
+        popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
+        popup_layout.add_widget(Label(text=message, font_size=dp(16)))
+        close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
+        popup = Popup(title=title, content=popup_layout, size_hint=(0.8, 0.4))
+        close_btn.bind(on_press=popup.dismiss)
+        popup_layout.add_widget(close_btn)
+        popup.open()
 
 
 class AddQuestionTab(BoxLayout):
@@ -540,6 +523,7 @@ class ExamTab(BoxLayout):
             self.option_labels.append(label)
 
         # Добавьте новый метод для обновления прямоугольника фона текста
+
     def update_label_rect(self, instance, value):
         instance.rect.pos = instance.pos
         instance.rect.size = instance.size
@@ -966,56 +950,7 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if platform == 'android':
-                # Используем интент для сохранения файла через системный файловый менеджер
-                from jnius import autoclass, cast
-                from android import mActivity, activity
-                from android.runnable import run_on_ui_thread
-
-                Intent = autoclass('android.content.Intent')
-                intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("application/json")
-                intent.putExtra(Intent.EXTRA_TITLE, "questions_export.json")
-
-                # Запускаем интент для сохранения файла
-                @run_on_ui_thread
-                def start_file_saver():
-                    mActivity.startActivityForResult(intent, 124)
-
-                start_file_saver()
-
-                # Обработчик результата сохранения файла
-                def on_activity_result(request_code, result_code, intent):
-                    if request_code == 124 and result_code == -1:  # -1 = RESULT_OK
-                        try:
-                            # Получаем URI для сохранения файла
-                            uri = intent.getData()
-
-                            # Открываем файл через ContentResolver
-                            ContentResolver = autoclass('android.content.ContentResolver')
-                            resolver = mActivity.getContentResolver()
-
-                            # Записываем данные в файл
-                            output_stream = resolver.openOutputStream(uri)
-                            from java.io import OutputStreamWriter, BufferedWriter
-                            writer = BufferedWriter(OutputStreamWriter(output_stream))
-
-                            # Записываем JSON
-                            writer.write(json.dumps(questions, ensure_ascii=False, indent=2))
-                            writer.close()
-                            output_stream.close()
-
-                            self.show_popup("Успех", "База данных успешно экспортирована!")
-
-                        except Exception as e:
-                            error_msg = str(e)
-                            if len(error_msg) > 100:
-                                error_msg = error_msg[:100] + "..."
-                            self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
-
-                # Регистрируем обработчик
-                activity.bind(on_activity_result=on_activity_result)
-
+                self.show_popup("Ошибка", "Экспорт на Android временно недоступен")
             else:
                 # На других платформах используем домашнюю директорию
                 home_dir = os.path.expanduser("~")
@@ -1036,191 +971,7 @@ class EditQuestionsTab(BoxLayout):
             self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
 
     def import_database(self, instance):
-        # Показываем сообщение о начале импорта
-        self.show_popup("Информация", "Запуск импорта...")
-
-        try:
-            if platform == 'android':
-                if hasattr(self, '_import_android'):
-                    self._import_android()
-                else:
-                    self.show_popup("Ошибка", "Метод импорта для Android не реализован")
-            else:
-                if hasattr(self, '_import_desktop'):
-                    self._import_desktop()
-                else:
-                    self.show_popup("Ошибка", "Метод импорта для Desktop не реализован")
-        except Exception as e:
-            self.show_popup("Ошибка", f"Ошибка при запуске импорта: {str(e)}")
-
-    def _import_android(self):
-        """Импорт для Android платформы"""
-        try:
-            from jnius import autoclass
-            from android import mActivity
-
-            # Получаем классы Java
-            Intent = autoclass('android.content.Intent')
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            activity = PythonActivity.mActivity
-
-            # Создаем интент для выбора файла
-            intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.setType("*/*")
-            intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
-
-            # Запускаем интент для выбора файла
-            activity.startActivityForResult(intent, 123)
-
-            # Показываем сообщение о выборе файла
-            self.show_popup("Информация", "Выберите файл с вопросами...")
-
-        except Exception as e:
-            self.show_popup("Ошибка", f"Ошибка при запуске файлового менеджера: {str(e)}")
-
-    def _import_desktop(self):
-        """Импорт для Desktop платформы"""
-        try:
-            # Для Desktop используем стандартный диалог выбора файла
-            from tkinter import Tk, filedialog
-
-            root = Tk()
-            root.withdraw()
-            root.attributes('-topmost', True)
-
-            file_path = filedialog.askopenfilename(
-                title="Выберите файл с вопросами",
-                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-            )
-
-            root.destroy()
-
-            if not file_path:
-                self.show_popup("Информация", "Выбор файла отменен")
-                return
-
-            self.show_popup("Информация", "Файл выбран, обрабатываем...")
-
-            # Загружаем вопросы из файла импорта
-            with open(file_path, 'r', encoding='utf-8') as f:
-                imported_questions = json.load(f)
-
-            # Проверяем валидность импортированных данных
-            if not isinstance(imported_questions, list):
-                self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                return
-
-            # Проверяем каждый вопрос на валидность
-            valid_questions = []
-            for question in imported_questions:
-                if (isinstance(question, dict) and
-                        'question' in question and
-                        'options' in question and
-                        'correct' in question):
-                    valid_questions.append(question)
-
-            if not valid_questions:
-                self.show_popup("Ошибка", "В файле нет валидных вопросов")
-                return
-
-            self.show_popup("Информация", "Формат проверен, сохраняем...")
-
-            # Сохраняем импортированные вопросы
-            if save_questions(valid_questions):
-                self.show_popup("Успех",
-                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
-
-        except json.JSONDecodeError as e:
-            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
-
-    def _process_android_file(self, uri):
-        """Обработка выбранного файла на Android"""
-        try:
-            from jnius import autocolass
-
-            # Получаем текущую активность
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            activity = PythonActivity.mActivity
-
-            # Открываем файл через ContentResolver
-            ContentResolver = autoclass('android.content.ContentResolver')
-            resolver = activity.getContentResolver()
-
-            # Читаем содержимое файла
-            input_stream = resolver.openInputStream(uri)
-
-            # Читаем содержимое файла с помощью Python
-            import io
-            reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
-            content = reader.read()
-            reader.close()
-            input_stream.close()
-
-            if not content:
-                self.show_popup("Ошибка", "Файл пуст")
-                return
-
-            # Парсим JSON
-            imported_questions = json.loads(content)
-
-            # Проверяем валидность импортированных данных
-            if not isinstance(imported_questions, list):
-                self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                return
-
-            # Проверяем каждый вопрос на валидность
-            valid_questions = []
-            for question in imported_questions:
-                if (isinstance(question, dict) and
-                        'question' in question and
-                        'options' in question and
-                        'correct' in question):
-                    valid_questions.append(question)
-
-            if not valid_questions:
-                self.show_popup("Ошибка", "В файле нет валидных вопросов")
-                return
-
-            # Сохраняем импортированные вопросы
-            if save_questions(valid_questions):
-                self.show_popup("Успех",
-                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
-
-        except json.JSONDecodeError as e:
-            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
-
-    def validate_question_format(self, question):
-        """Проверяет, что вопрос имеет правильный формат"""
-        if not isinstance(question, dict):
-            return False
-
-        required_fields = ['question', 'options', 'correct']
-        for field in required_fields:
-            if field not in question:
-                return False
-
-        if not isinstance(question['options'], list) or len(question['options']) < 2:
-            return False
-
-        if not isinstance(question['correct'], list) or len(question['correct']) == 0:
-            return False
-
-        return True
+        self.show_popup("Ошибка", "Импорт на Android временно недоступен")
 
     def show_popup(self, title, message):
         # Создаем ScrollView для длинных сообщений
