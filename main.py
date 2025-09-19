@@ -220,21 +220,17 @@ class ExamApp(App):
                 self.add_content.remove_option(None)
 
     def on_start(self):
-        # Регистрируем обработчик при запуске приложения только на Android
+        # Регистрируем обработчик результата выбора файла
         if platform == 'android':
             try:
                 from android import activity
                 activity.bind(on_activity_result=self.on_activity_result)
             except ImportError:
-                # Модуль недоступен на этой платформе
                 pass
 
     def on_activity_result(self, request_code, result_code, intent):
-        if platform != 'android':
-            return  # Этот метод только для Android
-
-        # Обрабатываем результат выбора файла
-        if request_code == 123:
+        """Обработчик результата выбора файла на Android"""
+        if request_code == 123:  # Наш код запроса
             if result_code == -1:  # RESULT_OK
                 try:
                     # Получаем URI выбранного файла
@@ -242,16 +238,19 @@ class ExamApp(App):
                     if not uri:
                         return
 
-                    # Получаем ссылку на текущую вкладку редактирования
+                    # Передаем URI в текущую вкладку редактирования
                     if hasattr(self, 'tabs'):
                         for tab in self.tabs.tab_list:
                             if hasattr(tab, 'content') and hasattr(tab.content, '_process_android_file'):
                                 tab.content._process_android_file(uri)
                                 break
-
                 except Exception as e:
-                    # Обработка ошибок
-                    pass
+                    # Показываем ошибку в текущей вкладке
+                    if hasattr(self, 'tabs'):
+                        for tab in self.tabs.tab_list:
+                            if hasattr(tab, 'content') and hasattr(tab.content, 'show_popup'):
+                                tab.content.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
+                                break
 
 
 class AddQuestionTab(BoxLayout):
@@ -1089,57 +1088,26 @@ class EditQuestionsTab(BoxLayout):
 
     def _import_android(self):
         """Импорт для Android платформы"""
-        if platform != 'android':
-            self.show_popup("Ошибка", "Импорт доступен только на Android")
-            return
         try:
+            from jnius import autoclass
             from android import mActivity
-            from jnius import autoclass, cast
-            from android.runnable import run_on_ui_thread
 
+            # Получаем классы Java
             Intent = autoclass('android.content.Intent')
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            activity = PythonActivity.mActivity
+
+            # Создаем интент для выбора файла
             intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
             intent.addCategory(Intent.CATEGORY_OPENABLE)
             intent.setType("*/*")
             intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
 
-            # Получаем текущую активность
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            activity = PythonActivity.mActivity
-
             # Запускаем интент для выбора файла
-            @run_on_ui_thread
-            def start_file_picker():
-                try:
-                    activity.startActivityForResult(intent, 123)
-                    self.show_popup("Информация", "Выберите файл с вопросами")
-                except Exception as e:
-                    self.show_popup("Ошибка", f"Не удалось запустить файловый менеджер: {str(e)}")
+            activity.startActivityForResult(intent, 123)
 
-            start_file_picker()
-
-            # Регистрируем обработчик результата
-            from android import activity
-            def on_activity_result(request_code, result_code, intent):
-                if request_code == 123:
-                    if result_code == -1:  # RESULT_OK
-                        try:
-                            # Получаем URI выбранного файла
-                            uri = intent.getData()
-                            if not uri:
-                                self.show_popup("Ошибка", "Не удалось получить URI файла")
-                                return
-
-                            self.show_popup("Информация", "Файл выбран, обрабатываем...")
-                            self._process_android_file(uri)
-
-                        except Exception as e:
-                            self.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
-                    else:
-                        self.show_popup("Информация", "Выбор файла отменен")
-
-            # Регистрируем обработчик
-            activity.bind(on_activity_result=on_activity_result)
+            # Сохраняем ссылку на текущий экземпляр для использования в обработчике
+            self._import_instance = self
 
         except Exception as e:
             self.show_popup("Ошибка", f"Ошибка при запуске файлового менеджера: {str(e)}")
@@ -1234,8 +1202,6 @@ class EditQuestionsTab(BoxLayout):
                 self.show_popup("Ошибка", "Файл пуст")
                 return
 
-            self.show_popup("Информация", "Файл прочитан, проверяем формат...")
-
             # Парсим JSON
             imported_questions = json.loads(content)
 
@@ -1256,8 +1222,6 @@ class EditQuestionsTab(BoxLayout):
             if not valid_questions:
                 self.show_popup("Ошибка", "В файле нет валидных вопросов")
                 return
-
-            self.show_popup("Информация", "Формат проверен, сохраняем...")
 
             # Сохраняем импортированные вопросы
             if save_questions(valid_questions):
