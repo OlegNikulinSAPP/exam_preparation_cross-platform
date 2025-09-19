@@ -219,6 +219,40 @@ class ExamApp(App):
             while len(self.add_content.option_widgets) > 2:
                 self.add_content.remove_option(None)
 
+    def on_start(self):
+        # Регистрируем обработчик при запуске приложения только на Android
+        if platform == 'android':
+            try:
+                from android import activity
+                activity.bind(on_activity_result=self.on_activity_result)
+            except ImportError:
+                # Модуль недоступен на этой платформе
+                pass
+
+    def on_activity_result(self, request_code, result_code, intent):
+        if platform != 'android':
+            return  # Этот метод только для Android
+
+        # Обрабатываем результат выбора файла
+        if request_code == 123:
+            if result_code == -1:  # RESULT_OK
+                try:
+                    # Получаем URI выбранного файла
+                    uri = intent.getData()
+                    if not uri:
+                        return
+
+                    # Получаем ссылку на текущую вкладку редактирования
+                    if hasattr(self, 'tabs'):
+                        for tab in self.tabs.tab_list:
+                            if hasattr(tab, 'content') and hasattr(tab.content, '_process_android_file'):
+                                tab.content._process_android_file(uri)
+                                break
+
+                except Exception as e:
+                    # Обработка ошибок
+                    pass
+
 
 class AddQuestionTab(BoxLayout):
     def __init__(self, app, **kwargs):
@@ -1049,9 +1083,12 @@ class EditQuestionsTab(BoxLayout):
 
     def _import_android(self):
         """Импорт для Android платформы"""
+        if platform != 'android':
+            self.show_popup("Ошибка", "Импорт доступен только на Android")
+            return
         try:
-            from android import mActivity, activity
-            from jnius import autoclass
+            from android import mActivity
+            from jnius import autoclass, cast
             from android.runnable import run_on_ui_thread
 
             Intent = autoclass('android.content.Intent')
@@ -1060,43 +1097,43 @@ class EditQuestionsTab(BoxLayout):
             intent.setType("*/*")
             intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
 
-            # Сохраняем ссылку на экземпляр для использования в обработчике
-            self._import_instance = self
-
-            # Обработчик результата выбора файла
-            def on_activity_result(request_code, result_code, intent):
-                if request_code != 123:
-                    return
-
-                if result_code == -1:  # RESULT_OK
-                    try:
-                        # Получаем URI выбранного файла
-                        uri = intent.getData()
-                        if not uri:
-                            self._import_instance.show_popup("Ошибка", "Не удалось получить URI файла")
-                            return
-
-                        self._import_instance.show_popup("Информация", "Файл выбран, обрабатываем...")
-                        self._import_instance._process_android_file(uri)
-
-                    except Exception as e:
-                        self._import_instance.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
-                else:
-                    self._import_instance.show_popup("Информация", "Выбор файла отменен")
-
-            # Регистрируем обработчик
-            activity.bind(on_activity_result=on_activity_result)
+            # Получаем текущую активность
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            activity = PythonActivity.mActivity
 
             # Запускаем интент для выбора файла
             @run_on_ui_thread
             def start_file_picker():
                 try:
-                    mActivity.startActivityForResult(intent, 123)
+                    activity.startActivityForResult(intent, 123)
                     self.show_popup("Информация", "Выберите файл с вопросами")
                 except Exception as e:
                     self.show_popup("Ошибка", f"Не удалось запустить файловый менеджер: {str(e)}")
 
             start_file_picker()
+
+            # Регистрируем обработчик результата
+            from android import activity
+            def on_activity_result(request_code, result_code, intent):
+                if request_code == 123:
+                    if result_code == -1:  # RESULT_OK
+                        try:
+                            # Получаем URI выбранного файла
+                            uri = intent.getData()
+                            if not uri:
+                                self.show_popup("Ошибка", "Не удалось получить URI файла")
+                                return
+
+                            self.show_popup("Информация", "Файл выбран, обрабатываем...")
+                            self._process_android_file(uri)
+
+                        except Exception as e:
+                            self.show_popup("Ошибка", f"Ошибка обработки файла: {str(e)}")
+                    else:
+                        self.show_popup("Информация", "Выбор файла отменен")
+
+            # Регистрируем обработчик
+            activity.bind(on_activity_result=on_activity_result)
 
         except Exception as e:
             self.show_popup("Ошибка", f"Ошибка при запуске файлового менеджера: {str(e)}")
@@ -1107,9 +1144,13 @@ class EditQuestionsTab(BoxLayout):
             from jnius import autoclass
             from android import mActivity
 
+            # Получаем текущую активность
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            activity = PythonActivity.mActivity
+
             # Открываем файл через ContentResolver
             ContentResolver = autoclass('android.content.ContentResolver')
-            resolver = mActivity.getContentResolver()
+            resolver = activity.getContentResolver()
 
             # Читаем содержимое файла
             input_stream = resolver.openInputStream(uri)
@@ -1129,67 +1170,6 @@ class EditQuestionsTab(BoxLayout):
 
             # Парсим JSON
             imported_questions = json.loads(content)
-
-            # Проверяем валидность импортированных данных
-            if not isinstance(imported_questions, list):
-                self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                return
-
-            # Проверяем каждый вопрос на валидность
-            valid_questions = []
-            for question in imported_questions:
-                if (isinstance(question, dict) and
-                        'question' in question and
-                        'options' in question and
-                        'correct' in question):
-                    valid_questions.append(question)
-
-            if not valid_questions:
-                self.show_popup("Ошибка", "В файле нет валидных вопросов")
-                return
-
-            self.show_popup("Информация", "Формат проверен, сохраняем...")
-
-            # Сохраняем импортированные вопросы
-            if save_questions(valid_questions):
-                self.show_popup("Успех",
-                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
-
-        except json.JSONDecodeError as e:
-            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
-
-    def _import_desktop(self):
-        """Импорт для Desktop платформы"""
-        try:
-            from tkinter import Tk, filedialog
-
-            root = Tk()
-            root.withdraw()
-            root.attributes('-topmost', True)
-
-            file_path = filedialog.askopenfilename(
-                title="Выберите файл с вопросами",
-                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-            )
-
-            root.destroy()
-
-            if not file_path:
-                self.show_popup("Информация", "Выбор файла отменен")
-                return
-
-            self.show_popup("Информация", "Файл выбран, обрабатываем...")
-
-            # Загружаем вопросы из файла импорта
-            with open(file_path, 'r', encoding='utf-8') as f:
-                imported_questions = json.load(f)
 
             # Проверяем валидность импортированных данных
             if not isinstance(imported_questions, list):
