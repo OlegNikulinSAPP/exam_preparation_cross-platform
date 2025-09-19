@@ -1038,141 +1038,58 @@ class EditQuestionsTab(BoxLayout):
             self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
 
     def import_database(self, instance):
-        try:
-            if platform == 'android':
-                # Используем системный файловый менеджер для выбора файла
-                from android import mActivity, activity
-                from jnius import autoclass
-                from android.runnable import run_on_ui_thread
+        if platform == 'android':
+            # Используем интент для выбора файла
+            from android import mActivity, activity
+            from jnius import autoclass
+            from android.runnable import run_on_ui_thread
 
-                Intent = autoclass('android.content.Intent')
-                intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.setType("*/*")
-                intent.putExtra(Intent.EXTRA_MIME_TYPES, ["application/json", "text/plain"])
+            Intent = autoclass('android.content.Intent')
+            intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            intent.setType("*/*")
 
-                # Запускаем интент для выбора файла
-                @run_on_ui_thread
-                def start_file_picker():
-                    mActivity.startActivityForResult(intent, 123)
+            @run_on_ui_thread
+            def start_file_picker():
+                mActivity.startActivityForResult(intent, 123)
 
-                start_file_picker()
+            start_file_picker()
 
-                # Обработчик результата выбора файла
-                def on_activity_result(request_code, result_code, intent):
-                    if request_code == 123 and result_code == -1:  # -1 = RESULT_OK
-                        try:
-                            # Получаем URI выбранного файла
-                            uri = intent.getData()
+            def on_activity_result(request_code, result_code, intent):
+                if request_code == 123 and result_code == -1:  # RESULT_OK
+                    try:
+                        # Получаем URI выбранного файла
+                        uri = intent.getData()
 
-                            # Открываем файл через ContentResolver
-                            ContentResolver = autoclass('android.content.ContentResolver')
-                            resolver = mActivity.getContentResolver()
+                        # Открываем файл через ContentResolver
+                        ContentResolver = autoclass('android.content.ContentResolver')
+                        resolver = mActivity.getContentResolver()
 
-                            # Читаем содержимое файла
-                            input_stream = resolver.openInputStream(uri)
+                        # Читаем содержимое файла
+                        input_stream = resolver.openInputStream(uri)
 
-                            # Читаем содержимое файла с помощью Python
-                            import io
-                            reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
-                            content = reader.read()
-                            reader.close()
-                            input_stream.close()
+                        # Читаем содержимое файла
+                        import io
+                        reader = io.BufferedReader(io.InputStreamReader(input_stream, "UTF-8"))
+                        content = reader.read()
+                        reader.close()
+                        input_stream.close()
 
-                            # Парсим JSON
-                            imported_questions = json.loads(content)
+                        # Парсим JSON
+                        imported_questions = json.loads(content)
 
-                            # Проверяем валидность импортированных данных
-                            if not isinstance(imported_questions, list):
-                                self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                                return
+                        # Сохраняем вопросы в sandbox-директорию приложения
+                        if save_questions(imported_questions):
+                            self.show_popup("Успех", f"База импортирована! Вопросов: {len(imported_questions)}")
+                            self.app.update_questions()
+                            self.load_questions()
+                        else:
+                            self.show_popup("Ошибка", "Не удалось сохранить базу")
 
-                            # Проверяем каждый вопрос на валидность
-                            valid_questions = []
-                            for question in imported_questions:
-                                if (isinstance(question, dict) and
-                                        'question' in question and
-                                        'options' in question and
-                                        'correct' in question):
-                                    valid_questions.append(question)
+                    except Exception as e:
+                        self.show_popup("Ошибка", f"Ошибка импорта: {str(e)}")
 
-                            if not valid_questions:
-                                self.show_popup("Ошибка", "В файле нет валидных вопросов")
-                                return
-
-                            # Сохраняем импортированные вопросы
-                            if save_questions(valid_questions):
-                                self.show_popup("Успех",
-                                                f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                                # Обновляем вопросы в приложении
-                                self.app.update_questions()
-                                self.load_questions()
-                            else:
-                                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
-
-                        except Exception as e:
-                            import traceback
-                            error_msg = traceback.format_exc()
-                            Logger.error(f"Import error: {error_msg}")
-                            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
-
-                # Регистрируем обработчик
-                activity.bind(on_activity_result=on_activity_result)
-
-            else:
-                # Для других платформ используем стандартный диалог выбора файла
-                from tkinter import Tk, filedialog
-
-                root = Tk()
-                root.withdraw()
-                root.attributes('-topmost', True)
-
-                file_path = filedialog.askopenfilename(
-                    title="Выберите файл с вопросами",
-                    filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-                )
-
-                root.destroy()
-
-                if not file_path:
-                    return
-
-                # Загружаем вопросы из файла импорта
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    imported_questions = json.load(f)
-
-                # Проверяем валидность импортированных данных
-                if not isinstance(imported_questions, list):
-                    self.show_popup("Ошибка", "Некорректный формат файла импорта")
-                    return
-
-                # Проверяем каждый вопрос на валидность
-                valid_questions = []
-                for question in imported_questions:
-                    if (isinstance(question, dict) and
-                            'question' in question and
-                            'options' in question and
-                            'correct' in question):
-                        valid_questions.append(question)
-
-                if not valid_questions:
-                    self.show_popup("Ошибка", "В файле нет валидных вопросов")
-                    return
-
-                # Сохраняем импортированные вопросы
-                if save_questions(valid_questions):
-                    self.show_popup("Успех",
-                                    f"База данных успешно импортирована! Загружено {len(valid_questions)} вопросов.")
-                    # Обновляем вопросы в приложении
-                    self.app.update_questions()
-                    self.load_questions()
-                else:
-                    self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
-        except Exception as e:
-            import traceback
-            error_msg = traceback.format_exc()
-            Logger.error(f"Import error: {error_msg}")
-            self.show_popup("Ошибка", f"Не удалось импортировать базу:\n{str(e)}")
+            activity.bind(on_activity_result=on_activity_result)
 
     def validate_question_format(self, question):
         """Проверяет, что вопрос имеет правильный формат"""
