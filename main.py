@@ -385,11 +385,11 @@ class ExamTab(BoxLayout):
             text_size=(Window.width - dp(30), None),  # Учитываем padding скролла
             halign='left',
             valign='top',
-            font_size=dp(18),  # Немного уменьшили шрифт для лучшего отображения
+            font_size=dp(18),  # Немного уменьшил шрифт для лучшего отображения
             bold=True,
             color=(1, 1, 0, 1),
             min_height=dp(150),
-            padding_x=dp(10),  # Добавили отступы
+            padding_x=dp(10),  # Добавил отступы
             padding_y=dp(10)
         )
         self.question_label.bind(size=self.question_label.setter('text_size'))
@@ -494,7 +494,7 @@ class ExamTab(BoxLayout):
 
         # Создаем чекбоксы для вариантов ответов (в перемешанном порядке)
         for new_index, (original_index, option_text) in enumerate(options_with_indices):
-            option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))  # Добавили spacing
+            option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))  # Добавил spacing, посмотрим)
 
             checkbox = CheckBox(size_hint_x=0.2)
             checkbox.disabled = self.answered  # Блокируем чекбоксы после ответа
@@ -502,13 +502,13 @@ class ExamTab(BoxLayout):
             # Используем AutoHeightLabel для автоматического изменения высоты
             label = AutoHeightLabel(
                 text=option_text,
-                text_size=(Window.width - dp(80), None),  # Уменьшили ширину для учета padding
+                text_size=(Window.width - dp(80), None),  # Уменьшил ширину для учета padding
                 halign='left',
                 valign='middle',
                 font_size=dp(16),
                 color=(0, 0, 0, 1),  # Черный цвет текста
                 min_height=dp(80),  # Минимальная высота для длинных ответов
-                padding_x=dp(10)  # Добавили горизонтальные отступы
+                padding_x=dp(10)  # Добавил горизонтальные отступы
             )
 
             # Добавляем белый фон только для текста ответа
@@ -526,8 +526,6 @@ class ExamTab(BoxLayout):
             self.checkboxes.append(checkbox)
             self.option_labels.append(label)
 
-        # Добавьте новый метод для обновления прямоугольника фона текста
-
     def update_label_rect(self, instance, value):
         instance.rect.pos = instance.pos
         instance.rect.size = instance.size
@@ -538,7 +536,7 @@ class ExamTab(BoxLayout):
         else:
             self.load_question()
 
-    # В методе check_answer измените подсветку фона:
+    # подсветку фона:
     def check_answer(self):
         selected_indices = []
         for i, checkbox in enumerate(self.checkboxes):
@@ -616,7 +614,7 @@ class EditQuestionsTab(BoxLayout):
         self.add_widget(title_label)
 
         # Прокручиваемый список вопросов
-        self.questions_scroll = ScrollView(size_hint=(1, 0.6))  # Уменьшили высоту списка
+        self.questions_scroll = ScrollView(size_hint=(1, 0.6))  # Уменьшил высоту списка
         self.questions_layout = BoxLayout(orientation='vertical', size_hint_y=None)
         self.questions_layout.bind(minimum_height=self.questions_layout.setter('height'))
         self.questions_scroll.add_widget(self.questions_layout)
@@ -626,14 +624,14 @@ class EditQuestionsTab(BoxLayout):
         self.refresh_btn = Button(
             text='Обновить список',
             size_hint_y=None,
-            height=dp(40),  # Уменьшили высоту кнопки
+            height=dp(40),  # Уменьшил высоту кнопки
             font_size=dp(14)
         )
         self.refresh_btn.bind(on_press=self.load_questions)
         self.add_widget(self.refresh_btn)
 
         # Кнопки экспорта и импорта
-        export_import_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшили высоту и отступы
+        export_import_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
 
         self.export_btn = Button(
             text='Экспорт',
@@ -657,7 +655,7 @@ class EditQuestionsTab(BoxLayout):
         self.reset_session_btn = Button(
             text='Сбросить сессию',
             size_hint_y=None,
-            height=dp(40),  # Уменьшили высоту кнопки
+            height=dp(40),  # Уменьшил высоту кнопки
             font_size=dp(12)  # Меньший шрифт
         )
         self.reset_session_btn.bind(on_press=self.reset_exam_session)
@@ -675,7 +673,7 @@ class EditQuestionsTab(BoxLayout):
         self.check_db_btn.bind(on_press=self.check_database_status)
         self.add_widget(self.check_db_btn)
 
-    # В класс EditQuestionsTab добавьте метод для проверки состояния базы
+    # В класс EditQuestionsTab добавил метод для проверки состояния базы
     def check_database_status(self, instance):
         """Проверяет состояние базы данных и показывает информацию"""
         questions = load_questions()
@@ -715,16 +713,16 @@ class EditQuestionsTab(BoxLayout):
             return
 
         for idx, question in enumerate(questions):
-            question_item = BoxLayout(size_hint_y=None, height=dp(60), spacing=dp(5))  # Уменьшили высоту и отступы
+            question_item = BoxLayout(size_hint_y=None, height=dp(60), spacing=dp(5))  # Уменьшил высоту и отступы
 
             # Текст вопроса (обрезаем если слишком длинный)
             question_text = question['question']
-            if len(question_text) > 40:  # Уменьшили длину обрезаемого текста
+            if len(question_text) > 40:  # Уменьшил длину обрезаемого текста
                 question_text = question_text[:37] + '...'
 
             question_label = Label(
                 text=question_text,
-                size_hint_x=0.7,  # Увеличили ширину для текста
+                size_hint_x=0.7,  # Увеличил ширину для текста
                 text_size=(Window.width * 0.7 - dp(20), None),
                 halign='left',
                 valign='middle'
@@ -732,7 +730,7 @@ class EditQuestionsTab(BoxLayout):
             question_label.bind(size=question_label.setter('text_size'))
 
             # Кнопки редактирования и удаления
-            btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(2))  # Уменьшили отступы
+            btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(2))  # Уменьшил отступы
 
             edit_btn = Button(text='Ред.', size_hint_x=0.5, font_size=dp(12))  # Меньший шрифт
             edit_btn.bind(on_press=lambda instance, current_idx=idx: self.edit_question(current_idx, questions))
@@ -755,7 +753,7 @@ class EditQuestionsTab(BoxLayout):
         # Создаем попап для редактирования
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
         popup = Popup(title='Редактирование вопроса', content=popup_layout,
-                      size_hint=(0.95, 0.9))  # Увеличили ширину попапа
+                      size_hint=(0.95, 0.9))  # Увеличил ширину попапа
 
         # Поле вопроса
         question_input = AutoHeightTextInput(
@@ -808,7 +806,7 @@ class EditQuestionsTab(BoxLayout):
             option_widgets.append((checkbox, text_input))
 
         # Кнопки управления вариантами
-        btn_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшили высоту и отступы
+        btn_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
         add_btn = Button(text='Добавить', font_size=dp(12))  # Меньший шрифт
         remove_btn = Button(text='Удалить', font_size=dp(12))  # Меньший шрифт
         btn_layout.add_widget(add_btn)
@@ -816,7 +814,7 @@ class EditQuestionsTab(BoxLayout):
         popup_layout.add_widget(btn_layout)
 
         # Кнопки сохранения и отмены
-        btn_layout2 = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшили высоту и отступы
+        btn_layout2 = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
         save_btn = Button(text='Сохранить', font_size=dp(14))
         cancel_btn = Button(text='Отмена', font_size=dp(14))
         btn_layout2.add_widget(save_btn)
@@ -1160,7 +1158,7 @@ class EditQuestionsTab(BoxLayout):
         popup = Popup(
             title=title,
             content=popup_layout,
-            size_hint=(0.9, 0.7)  # Увеличили размер попапа
+            size_hint=(0.9, 0.7)  # Увеличил размер попапа
         )
         close_btn.bind(on_press=popup.dismiss)
         popup.open()
