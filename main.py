@@ -162,7 +162,7 @@ class ExamApp(App):
         self.tabs = TabbedPanel(do_default_tab=False)
 
         # Вкладка добавления вопросов
-        add_tab = TabbedPanelItem(text='Добавить вопрос')
+        add_tab = TabbedPanelItem(text='Добавить\nвопрос')
         self.add_content = AddQuestionTab(app=self)
         add_tab.add_widget(self.add_content)
         self.tabs.add_widget(add_tab)
