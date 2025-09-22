@@ -74,8 +74,8 @@ def load_questions():
             return questions
         Logger.info("No questions file found or file is empty")
         return []
-    except Exception as e:
-        Logger.error(f"Error loading questions: {e}")
+    except Exception as ex:
+        Logger.error(f"Error loading questions: {str(ex)}")
         return []
 
 
@@ -98,8 +98,8 @@ def save_questions(questions):
         else:
             Logger.error("Failed to save questions")
             return False
-    except Exception as e:
-        Logger.error(f"Error saving questions: {e}")
+    except Exception as ex:
+        Logger.error(f"Error saving questions: {str(ex)}")
         return False
 
 
@@ -112,8 +112,8 @@ class AutoHeightTextInput(TextInput):
         self.bind(text=self.on_text_change)
         self.height = self.min_height
 
-    def on_text_change(self, instance, value):
-        # Вычисляем необходимую высоту на основе текста
+    def on_text_change(self, _instance, _value):
+        """Автоматически изменяет высоту текстового поля при изменении текста"""
         lines = len(self._lines)
         line_height = self.line_height + self.line_spacing
         new_height = max(self.min_height, lines * line_height + self.padding[1] + self.padding[3])
@@ -139,13 +139,13 @@ class AutoHeightLabel(Label):
         self.bind(text=self.on_text_change)
         self.height = self.min_height
 
-    def on_text_change(self, instance, value):
+    def on_text_change(self, _instance, _value):
         # Вычисляем необходимую высоту на основе текста с учетом отступов
         text_width = self.width - self.padding_x * 2
         if text_width <= 0:
             return
 
-        # Создаем временный текстур для расчета высоты
+        # Создаем текстур для расчета высоты
         from kivy.core.text import Label as CoreLabel
         core_label = CoreLabel(
             text=self.text,
@@ -163,6 +163,13 @@ class AutoHeightLabel(Label):
 
 
 class ExamApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tabs = None
+        self.add_content = None
+        self.exam_content = None
+        self.edit_content = None
+
     def build(self):
         # Создаем панель с вкладками
         self.tabs = TabbedPanel(do_default_tab=False)
@@ -203,7 +210,8 @@ class ExamApp(App):
             while len(self.add_content.option_widgets) > 2:
                 self.add_content.remove_option(None)
 
-    def show_popup(self, title, message):
+    @staticmethod
+    def show_popup(title, message):
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
         popup_layout.add_widget(Label(text=message, font_size=dp(16)))
         close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
@@ -269,7 +277,7 @@ class AddQuestionTab(BoxLayout):
         self.add_option()
         self.add_option()
 
-    def add_option(self, instance=None):
+    def add_option(self, _instance=None):
         if len(self.option_widgets) >= 6:
             self.show_popup(POPUP_TITLE_INFO, "Максимальное количество вариантов - 6")
             return
@@ -293,14 +301,14 @@ class AddQuestionTab(BoxLayout):
         self.options_layout.add_widget(option_layout)
         self.option_widgets.append((checkbox, text_input))
 
-    def remove_option(self, instance):
+    def remove_option(self, _instance):
         if len(self.option_widgets) > 2:
             last_option = self.option_widgets.pop()
             self.options_layout.remove_widget(last_option[0].parent)
         else:
             self.show_popup(POPUP_TITLE_INFO, "Минимальное количество вариантов - 2")
 
-    def save_question(self, instance):
+    def save_question(self, _instance):
         question_text = self.question_input.text.strip()
         options = []
         correct_options = []
@@ -358,7 +366,8 @@ class AddQuestionTab(BoxLayout):
 
         self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос добавлен!")
 
-    def show_popup(self, title, message):
+    @staticmethod
+    def show_popup(title, message):
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
         popup_layout.add_widget(Label(text=message, font_size=dp(16)))
         close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
@@ -371,6 +380,8 @@ class AddQuestionTab(BoxLayout):
 class ExamTab(BoxLayout):
     def __init__(self, app, **kwargs):
         super().__init__(**kwargs)
+        self.option_labels = None
+        self.checkboxes = None
         self.app = app
         self._setup_ui()
         self._initialize_state()
@@ -550,7 +561,7 @@ class ExamTab(BoxLayout):
         for new_index, (_, option_text) in enumerate(options_with_indices):
             self._create_single_option(new_index, option_text)
 
-    def _create_single_option(self, index, option_text):
+    def _create_single_option(self, _index, option_text):
         """Создает один вариант ответа с чекбоксом и текстом"""
         option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))
 
@@ -589,12 +600,13 @@ class ExamTab(BoxLayout):
 
         return label
 
-    def update_label_rect(self, instance, value):
+    @staticmethod
+    def update_label_rect(instance, _value):
         """Обновляет позицию и размер фона метки"""
         instance.rect.pos = instance.pos
         instance.rect.size = instance.size
 
-    def on_answer_btn_press(self, instance):
+    def on_answer_btn_press(self, _instance):
         """Обрабатывает нажатие кнопки ответа/продолжения"""
         if not self.answered:
             self.check_answer()
@@ -675,12 +687,23 @@ class EditQuestionsTab(BoxLayout):
     def __init__(self, app, **kwargs):
         super().__init__(**kwargs)
         self.app = app
+        self.current_edit_index = None
+        self._edit_popup_data = {}  # Инициализируем пустой словарь
+        self._setup_ui()
+        self.load_questions()
+
+    def _setup_ui(self):
+        """Настраивает пользовательский интерфейс вкладки"""
         self.orientation = 'vertical'
         self.padding = dp(10)
         self.spacing = dp(10)
-        self.current_edit_index = None
 
-        # Заголовок
+        self._create_title()
+        self._create_questions_list()
+        self._create_control_buttons()
+
+    def _create_title(self):
+        """Создает заголовок вкладки"""
         title_label = Label(
             text='Редактирование вопросов',
             size_hint_y=None,
@@ -690,57 +713,56 @@ class EditQuestionsTab(BoxLayout):
         )
         self.add_widget(title_label)
 
-        # Прокручиваемый список вопросов
-        self.questions_scroll = ScrollView(size_hint=(1, 0.6))  # Уменьшил высоту списка
+    def _create_questions_list(self):
+        """Создает прокручиваемый список вопросов"""
+        self.questions_scroll = ScrollView(size_hint=(1, 0.6))
         self.questions_layout = BoxLayout(orientation='vertical', size_hint_y=None)
         self.questions_layout.bind(minimum_height=self.questions_layout.setter('height'))
         self.questions_scroll.add_widget(self.questions_layout)
         self.add_widget(self.questions_scroll)
 
-        # Кнопка обновления списка
+    def _create_control_buttons(self):
+        """Создает кнопки управления"""
+        self._create_refresh_button()
+        self._create_export_import_buttons()
+        self._create_session_buttons()
+
+    def _create_refresh_button(self):
+        """Создает кнопку обновления списка"""
         self.refresh_btn = Button(
             text='Обновить список',
             size_hint_y=None,
-            height=dp(40),  # Уменьшил высоту кнопки
+            height=dp(40),
             font_size=dp(14)
         )
         self.refresh_btn.bind(on_press=self.load_questions)
         self.add_widget(self.refresh_btn)
 
-        # Кнопки экспорта и импорта
-        export_import_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
+    def _create_export_import_buttons(self):
+        """Создает кнопки экспорта и импорта"""
+        export_import_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))
 
-        self.export_btn = Button(
-            text='Экспорт',
-            size_hint_x=0.5,  # Уже кнопки
-            font_size=dp(12)  # Меньший шрифт
-        )
+        self.export_btn = Button(text='Экспорт', size_hint_x=0.5, font_size=dp(12))
         self.export_btn.bind(on_press=self.export_database)
         export_import_layout.add_widget(self.export_btn)
 
-        self.import_btn = Button(
-            text='Импорт',
-            size_hint_x=0.5,  # Уже кнопки
-            font_size=dp(12)  # Меньший шрифт
-        )
+        self.import_btn = Button(text='Импорт', size_hint_x=0.5, font_size=dp(12))
         self.import_btn.bind(on_press=self.import_database)
         export_import_layout.add_widget(self.import_btn)
 
         self.add_widget(export_import_layout)
 
-        # Кнопка сброса сессии экзамена
+    def _create_session_buttons(self):
+        """Создает кнопки управления сессией"""
         self.reset_session_btn = Button(
             text='Сбросить сессию',
             size_hint_y=None,
-            height=dp(40),  # Уменьшил высоту кнопки
-            font_size=dp(12)  # Меньший шрифт
+            height=dp(40),
+            font_size=dp(12)
         )
         self.reset_session_btn.bind(on_press=self.reset_exam_session)
         self.add_widget(self.reset_session_btn)
 
-        self.load_questions()
-
-        # Кнопка проверки состояния базы
         self.check_db_btn = Button(
             text='Проверить состояние базы',
             size_hint_y=None,
@@ -750,100 +772,118 @@ class EditQuestionsTab(BoxLayout):
         self.check_db_btn.bind(on_press=self.check_database_status)
         self.add_widget(self.check_db_btn)
 
-    # В класс EditQuestionsTab добавил метод для проверки состояния базы
-    def check_database_status(self, instance):
-        """Проверяет состояние базы данных и показывает информацию"""
-        questions = load_questions()
-        db_path = QUESTIONS_FILE
-        db_exists = os.path.exists(db_path)
-        db_size = os.path.getsize(db_path) if db_exists else 0
-
-        message = f"""
-        Путь к базе: {db_path}
-        Файл существует: {'Да' if db_exists else 'Нет'}
-        Размер файла: {db_size} байт
-        Количество вопросов: {len(questions)}
-        """
-
-        self.show_popup("Состояние базы данных", message)
-
-    def reset_exam_session(self, instance):
-        """Сбросить сессию экзамена"""
-        if hasattr(self.app, 'exam_content'):
-            self.app.exam_content.reset_session()
-            self.show_popup(POPUP_TITLE_SUCCESS, "Сессия экзамена сброшена!")
-
-    def load_questions(self, instance=None):
+    def load_questions(self, _instance=None):
+        """Загружает и отображает список вопросов"""
         self.questions_layout.clear_widgets()
-
-        # Загружаем вопросы
         questions = load_questions()
 
         if not questions:
-            no_questions_label = Label(
-                text='В базе нет вопросов.',
-                size_hint_y=None,
-                height=dp(40),
-                font_size=dp(16)
-            )
-            self.questions_layout.add_widget(no_questions_label)
+            self._show_no_questions_message()
             return
 
+        self._display_questions_list(questions)
+
+    def _show_no_questions_message(self):
+        """Показывает сообщение об отсутствии вопросов"""
+        no_questions_label = Label(
+            text='В базе нет вопросов.',
+            size_hint_y=None,
+            height=dp(40),
+            font_size=dp(16)
+        )
+        self.questions_layout.add_widget(no_questions_label)
+
+    def _display_questions_list(self, questions):
+        """Отображает список вопросов с кнопками управления"""
         for idx, question in enumerate(questions):
-            question_item = BoxLayout(size_hint_y=None, height=dp(60), spacing=dp(5))  # Уменьшил высоту и отступы
+            self._create_question_item(idx, question)
 
-            # Текст вопроса (обрезаем если слишком длинный)
-            question_text = question['question']
-            if len(question_text) > 40:  # Уменьшил длину обрезаемого текста
-                question_text = question_text[:37] + '...'
+    def _create_question_item(self, index, question):
+        """Создает элемент списка для одного вопроса"""
+        question_item = BoxLayout(size_hint_y=None, height=dp(60), spacing=dp(5))
 
-            question_label = Label(
-                text=question_text,
-                size_hint_x=0.7,  # Увеличил ширину для текста
-                text_size=(Window.width * 0.7 - dp(20), None),
-                halign='left',
-                valign='middle'
-            )
-            question_label.bind(size=question_label.setter('text_size'))
+        # Текст вопроса
+        question_text = self._truncate_question_text(question['question'])
+        question_label = Label(
+            text=question_text,
+            size_hint_x=0.7,
+            text_size=(Window.width * 0.7 - dp(20), None),
+            halign='left',
+            valign='middle'
+        )
+        question_label.bind(size=question_label.setter('text_size'))
 
-            # Кнопки редактирования и удаления
-            btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(2))  # Уменьшил отступы
+        # Кнопки управления
+        btn_layout = self._create_question_buttons(index, question)
 
-            edit_btn = Button(text='Ред.', size_hint_x=0.5, font_size=dp(12))  # Меньший шрифт
-            edit_btn.bind(on_press=lambda instance, current_idx=idx: self.edit_question(current_idx, questions))
+        question_item.add_widget(question_label)
+        question_item.add_widget(btn_layout)
+        self.questions_layout.add_widget(question_item)
 
-            delete_btn = Button(text='Удл.', size_hint_x=0.5, font_size=dp(12))  # Меньший шрифт
-            delete_btn.bind(on_press=lambda instance, current_idx=idx: self.delete_question(current_idx, questions))
+    @staticmethod
+    def _truncate_question_text(text):
+        """Обрезает длинный текст вопроса"""
+        return text[:37] + '...' if len(text) > 40 else text
 
-            btn_layout.add_widget(edit_btn)
-            btn_layout.add_widget(delete_btn)
+    def _create_question_buttons(self, index, _question):
+        """Создает кнопки управления для вопроса"""
+        btn_layout = BoxLayout(size_hint_x=0.3, spacing=dp(2))
 
-            question_item.add_widget(question_label)
-            question_item.add_widget(btn_layout)
+        edit_btn = Button(text='Ред.', size_hint_x=0.5, font_size=dp(12))
+        edit_btn.bind(on_press=lambda inst: self.edit_question(index, load_questions()))
 
-            self.questions_layout.add_widget(question_item)
+        delete_btn = Button(text='Удл.', size_hint_x=0.5, font_size=dp(12))
+        delete_btn.bind(on_press=lambda inst: self.delete_question(index, load_questions()))
+
+        btn_layout.add_widget(edit_btn)
+        btn_layout.add_widget(delete_btn)
+
+        return btn_layout
 
     def edit_question(self, index, questions):
+        """Открывает попап редактирования вопроса"""
         self.current_edit_index = index
         question_data = questions[index]
 
         # Создаем попап для редактирования
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
         popup = Popup(title='Редактирование вопроса', content=popup_layout,
-                      size_hint=(0.95, 0.9))  # Увеличил ширину попапа
+                      size_hint=(0.95, 0.9))
 
-        # Поле вопроса
-        question_input = AutoHeightTextInput(
-            text=question_data['question'],
+        # Инициализируем данные попапа
+        self._edit_popup_data = {
+            'popup': popup,
+            'option_widgets': [],
+            'options_layout': None
+        }
+
+        # Создаем содержимое попапа
+        question_input = self._create_question_input(question_data['question'])
+        popup_layout.add_widget(Label(text='Вопрос:', size_hint_y=None, height=dp(30)))
+        popup_layout.add_widget(question_input)
+
+        # Создаем секцию вариантов ответов
+        _, options_layout = self._create_options_section(popup_layout, question_data)
+        self._edit_popup_data['options_layout'] = options_layout
+
+        # Создаем кнопки управления
+        self._create_edit_buttons(popup_layout, question_input)
+
+        popup.open()
+
+    @staticmethod
+    def _create_question_input(question_text):
+        """Создает поле ввода для вопроса"""
+        return AutoHeightTextInput(
+            text=question_text,
             multiline=True,
             size_hint_y=None,
             min_height=dp(40),
             font_size=dp(14)
         )
-        popup_layout.add_widget(Label(text='Вопрос:', size_hint_y=None, height=dp(30)))
-        popup_layout.add_widget(question_input)
 
-        # Область для вариантов ответов
+    def _create_options_section(self, popup_layout, question_data):
+        """Создает секцию вариантов ответов"""
         options_label = Label(
             text='Варианты ответов (отметьте правильные):',
             size_hint_y=None,
@@ -858,176 +898,215 @@ class EditQuestionsTab(BoxLayout):
         options_scroll.add_widget(options_layout)
         popup_layout.add_widget(options_scroll)
 
-        option_widgets = []
-
         # Добавляем существующие варианты ответов
         for i, option in enumerate(question_data['options']):
-            option_layout = BoxLayout(size_hint_y=None, height=dp(60))
+            self._add_option_widget(option, i, question_data, options_layout)
 
-            checkbox = CheckBox(size_hint_x=0.2)
-            # Отмечаем правильные ответы
-            if str(i + 1) in question_data['correct']:
-                checkbox.active = True
+        return options_scroll, options_layout
 
-            text_input = AutoHeightTextInput(
-                text=option,
-                multiline=True,
-                size_hint_x=0.8,
-                min_height=dp(40),
-                font_size=dp(14)
-            )
+    def _add_option_widget(self, option_text, index, question_data, options_layout):
+        """Добавляет виджет варианта ответа"""
+        option_layout = BoxLayout(size_hint_y=None, height=dp(60))
 
-            option_layout.add_widget(checkbox)
-            option_layout.add_widget(text_input)
-            options_layout.add_widget(option_layout)
-            option_widgets.append((checkbox, text_input))
+        checkbox = CheckBox(size_hint_x=0.2)
+        if str(index + 1) in question_data['correct']:
+            checkbox.active = True
 
+        text_input = AutoHeightTextInput(
+            text=option_text,
+            multiline=True,
+            size_hint_x=0.8,
+            min_height=dp(40),
+            font_size=dp(14)
+        )
+
+        option_layout.add_widget(checkbox)
+        option_layout.add_widget(text_input)
+        options_layout.add_widget(option_layout)
+        self._edit_popup_data['option_widgets'].append((checkbox, text_input))
+
+    def _create_edit_buttons(self, popup_layout, question_input):
+        """Создает кнопки управления попапом"""
         # Кнопки управления вариантами
-        btn_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
-        add_btn = Button(text='Добавить', font_size=dp(12))  # Меньший шрифт
-        remove_btn = Button(text='Удалить', font_size=dp(12))  # Меньший шрифт
+        btn_layout = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))
+
+        add_btn = Button(text='Добавить', font_size=dp(12))
+        remove_btn = Button(text='Удалить', font_size=dp(12))
+
+        add_btn.bind(on_press=lambda x: self._on_add_option())
+        remove_btn.bind(on_press=lambda x: self._on_remove_option())
+
         btn_layout.add_widget(add_btn)
         btn_layout.add_widget(remove_btn)
         popup_layout.add_widget(btn_layout)
 
         # Кнопки сохранения и отмены
-        btn_layout2 = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))  # Уменьшил высоту и отступы
+        btn_layout2 = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(5))
         save_btn = Button(text='Сохранить', font_size=dp(14))
         cancel_btn = Button(text='Отмена', font_size=dp(14))
+
+        save_btn.bind(on_press=lambda x: self._save_question(question_input))
+        cancel_btn.bind(on_press=lambda x: self._edit_popup_data['popup'].dismiss())
+
         btn_layout2.add_widget(save_btn)
         btn_layout2.add_widget(cancel_btn)
         popup_layout.add_widget(btn_layout2)
 
-        # Функции для кнопок
-        def add_option(instance):
-            if len(option_widgets) >= 6:
-                self.show_popup(POPUP_TITLE_INFO, "Максимальное количество вариантов - 6")
-                return
+    def _on_add_option(self):
+        """Обработчик добавления варианта"""
+        if len(self._edit_popup_data['option_widgets']) >= 6:
+            self.show_popup(POPUP_TITLE_INFO, "Максимальное количество вариантов - 6")
+            return
 
-            option_layout = BoxLayout(size_hint_y=None, height=dp(60))
-            checkbox = CheckBox(size_hint_x=0.2)
-            text_input = AutoHeightTextInput(
-                multiline=True,
-                size_hint_x=0.8,
-                min_height=dp(40),
-                font_size=dp(14),
-                hint_text="Новый вариант"
-            )
+        option_layout = BoxLayout(size_hint_y=None, height=dp(60))
+        checkbox = CheckBox(size_hint_x=0.2)
+        text_input = AutoHeightTextInput(
+            multiline=True,
+            size_hint_x=0.8,
+            min_height=dp(40),
+            font_size=dp(14),
+            hint_text="Новый вариант"
+        )
 
-            option_layout.add_widget(checkbox)
-            option_layout.add_widget(text_input)
-            options_layout.add_widget(option_layout)
-            option_widgets.append((checkbox, text_input))
+        option_layout.add_widget(checkbox)
+        option_layout.add_widget(text_input)
+        self._edit_popup_data['options_layout'].add_widget(option_layout)
+        self._edit_popup_data['option_widgets'].append((checkbox, text_input))
 
-        def remove_option(instance):
-            if len(option_widgets) > 2:
-                last_option = option_widgets.pop()
-                options_layout.remove_widget(last_option[0].parent)
-            else:
-                self.show_popup(POPUP_TITLE_INFO, "Минимальное количество вариантов - 2")
+    def _on_remove_option(self):
+        """Обработчик удаления варианта"""
+        if len(self._edit_popup_data['option_widgets']) > 2:
+            last_option = self._edit_popup_data['option_widgets'].pop()
+            self._edit_popup_data['options_layout'].remove_widget(last_option[0].parent)
+        else:
+            self.show_popup(POPUP_TITLE_INFO, "Минимальное количество вариантов - 2")
 
-        def save_question(instance):
-            nonlocal option_widgets
-            new_question_text = question_input.text.strip()
-            options = []
-            correct_options = []
+    def _save_question(self, question_input):
+        """Сохраняет отредактированный вопрос"""
+        if not hasattr(self, '_edit_popup_data') or not self._edit_popup_data:
+            self.show_popup(POPUP_TITLE_ERROR, "Данные редактирования не найдены")
+            return
 
-            # Собираем данные из полей
-            for i, (checkbox, text_input) in enumerate(option_widgets):
-                option_text = text_input.text.strip()
-                if option_text:  # Игнорируем пустые варианты
-                    options.append(option_text)
-                    if checkbox.active:
-                        correct_options.append(str(i + 1))
+        questions = load_questions()
+        question_text = question_input.text.strip()
+        options_data = self._collect_options_data()
 
-            # Проверяем валидность данных
-            if not new_question_text:
-                self.show_popup(POPUP_TITLE_ERROR, "Введите вопрос!")
-                return
+        if not self._validate_question_data(question_text, options_data):
+            return
 
-            if len(options) < 2:
-                self.show_popup(POPUP_TITLE_ERROR, "Должно быть хотя бы два варианта ответа!")
-                return
+        # Обновляем вопрос
+        questions[self.current_edit_index] = {
+            'question': question_text,
+            'options': options_data['options'],
+            'correct': options_data['correct_options']
+        }
 
-            if not correct_options:
-                self.show_popup(POPUP_TITLE_ERROR, "Выберите хотя бы один правильный ответ!")
-                return
-
-            # Обновляем вопрос
-            questions[self.current_edit_index] = {
-                'question': new_question_text,
-                'options': options,
-                'correct': correct_options
-            }
-
-            # Сохраняем вопросы
-            if not save_questions(questions):
-                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
-                return
-
-            popup.dismiss()
+        if save_questions(questions):
+            self._edit_popup_data['popup'].dismiss()
             self.load_questions()
-            # Уведомляем приложение об обновлении вопросов
             self.app.update_questions()
             self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос обновлен!")
+        else:
+            self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
 
-        def cancel_edit(instance):
-            popup.dismiss()
+    def _collect_options_data(self):
+        """Собирает данные о вариантах ответов"""
+        options = []
+        correct_options = []
 
-        add_btn.bind(on_press=add_option)
-        remove_btn.bind(on_press=remove_option)
-        save_btn.bind(on_press=save_question)
-        cancel_btn.bind(on_press=cancel_edit)
+        for i, (checkbox, text_input) in enumerate(self._edit_popup_data['option_widgets']):
+            option_text = text_input.text.strip()
+            if option_text:
+                options.append(option_text)
+                if checkbox.active:
+                    correct_options.append(str(i + 1))
 
-        popup.open()
+        return {'options': options, 'correct_options': correct_options}
 
+    def _validate_question_data(self, question_text, options_data):
+        """Проверяет валидность данных вопроса"""
+        if not question_text:
+            self.show_popup(POPUP_TITLE_ERROR, "Введите вопрос!")
+            return False
+
+        if len(options_data['options']) < 2:
+            self.show_popup(POPUP_TITLE_ERROR, "Должно быть хотя бы два варианта ответа!")
+            return False
+
+        if not options_data['correct_options']:
+            self.show_popup(POPUP_TITLE_ERROR, "Выберите хотя бы один правильный ответ!")
+            return False
+
+        return True
+
+    # Остальные методы остаются без изменений
     def delete_question(self, index, questions):
+        """Удаляет вопрос с подтверждением"""
         if 0 <= index < len(questions):
-            # Подтверждение удаления
-            confirm_layout = BoxLayout(orientation='vertical', padding=dp(10))
-            confirm_label = Label(
-                text=f'Вы уверены, что хотите удалить вопрос?\n\n{questions[index]["question"][:50]}...',
-                text_size=(Window.width * 0.8 - dp(20), None)
-            )
-            confirm_layout.add_widget(confirm_label)
+            self._show_delete_confirmation(index, questions)
 
-            btn_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
-            yes_btn = Button(text='Да', font_size=dp(16))
-            no_btn = Button(text='Нет', font_size=dp(16))
-            btn_layout.add_widget(yes_btn)
-            btn_layout.add_widget(no_btn)
-            confirm_layout.add_widget(btn_layout)
+    def _show_delete_confirmation(self, index, questions):
+        """Показывает подтверждение удаления"""
+        confirm_layout = BoxLayout(orientation='vertical', padding=dp(10))
+        confirm_label = Label(
+            text=f'Вы уверены, что хотите удалить вопрос?\n\n{questions[index]["question"][:50]}...',
+            text_size=(Window.width * 0.8 - dp(20), None)
+        )
+        confirm_layout.add_widget(confirm_label)
 
-            confirm_popup = Popup(title='Подтверждение удаления', content=confirm_layout,
-                                  size_hint=(0.8, 0.4))
+        btn_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        yes_btn = Button(text='Да', font_size=dp(16))
+        no_btn = Button(text='Нет', font_size=dp(16))
 
-            def confirm_delete(instance):
-                questions.pop(index)
+        # Создаем попап перед привязкой кнопок
+        confirm_popup = Popup(title='Подтверждение удаления', content=confirm_layout, size_hint=(0.8, 0.4))
 
-                # Сохраняем вопросы
-                if not save_questions(questions):
-                    self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
-                    return
+        # Правильная привязка кнопок
+        yes_btn.bind(on_press=lambda x: self._confirm_delete(index, questions, confirm_popup))
+        no_btn.bind(on_press=confirm_popup.dismiss)
 
-                confirm_popup.dismiss()
-                self.load_questions()
-                # Уведомляем приложение об обновлении вопросов
-                self.app.update_questions()
-                self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос удален!")
+        btn_layout.add_widget(yes_btn)
+        btn_layout.add_widget(no_btn)
+        confirm_layout.add_widget(btn_layout)
 
-            def cancel_delete(instance):
-                confirm_popup.dismiss()
+        confirm_popup.open()
 
-            yes_btn.bind(on_press=confirm_delete)
-            no_btn.bind(on_press=cancel_delete)
+    def _confirm_delete(self, index, questions, popup):
+        """Подтверждает удаление вопроса"""
+        questions.pop(index)
 
-            confirm_popup.open()
+        if save_questions(questions):
+            popup.dismiss()  # Используем переданный попап
+            self.load_questions()
+            self.app.update_questions()
+            self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос удален!")
+        else:
+            self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
 
-    def export_database(self, instance):
+    def reset_exam_session(self, _instance):
+        """Сбрасывает сессию экзамена"""
+        if hasattr(self.app, 'exam_content'):
+            self.app.exam_content.reset_session()
+            self.show_popup(POPUP_TITLE_SUCCESS, "Сессия экзамена сброшена!")
+
+    def check_database_status(self, _instance):
+        """Проверяет состояние базы данных"""
+        questions = load_questions()
+        db_path = QUESTIONS_FILE
+        db_exists = os.path.exists(db_path)
+        db_size = os.path.getsize(db_path) if db_exists else 0
+
+        message = f"""Путь к базе: {db_path}
+Файл существует: {'Да' if db_exists else 'Нет'}
+Размер файла: {db_size} байт
+Количество вопросов: {len(questions)}"""
+
+        self.show_popup("Состояние базы данных", message)
+
+    def export_database(self, _instance):
+        """Экспортирует базу данных"""
         try:
-            # Загружаем текущие вопросы
             questions = load_questions()
-
             if not questions:
                 self.show_popup(POPUP_TITLE_ERROR, "Нет вопросов для экспорта")
                 return
@@ -1036,209 +1115,143 @@ class EditQuestionsTab(BoxLayout):
                 self._export_android(questions)
             else:
                 self._export_desktop(questions)
+        except Exception as ex:
+            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка экспорта: {str(ex)}")
 
-        except Exception as e:
-            error_msg = str(e)
-            if len(error_msg) > 100:
-                error_msg = error_msg[:100] + "..."
-            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать базу:\n{error_msg}")
-
-    def _export_android(self, questions):
-        """Экспорт для Android"""
-        try:
-            from android.storage import primary_external_storage_path  # type: ignore
-
-            # Путь к папке Загрузки на Android
-            downloads_path = os.path.join(primary_external_storage_path(), "Download")
-            export_path = os.path.join(downloads_path, "questions_export.json")
-
-            # Создаем папку Download, если ее нет
-            if not os.path.exists(downloads_path):
-                os.makedirs(downloads_path)
-
-            # Сохраняем вопросы в файл экспорта
-            with open(export_path, 'w', encoding='utf-8') as f:
-                json.dump(questions, f, ensure_ascii=False, indent=2)
-
-            self.show_popup(POPUP_TITLE_SUCCESS, f"База данных экспортирована в папку Загрузки:\n{export_path}")
-
-        except Exception as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать на Android: {str(e)}")
-
-    def _export_desktop(self, questions):
-        """Экспорт для Desktop"""
-        try:
-            # На других платформах используем домашнюю директорию
-            home_dir = os.path.expanduser("~")
-            downloads_path = os.path.join(home_dir, 'Downloads')
-
-            # Создаем папку Downloads, если ее нет
-            if not os.path.exists(downloads_path):
-                os.makedirs(downloads_path)
-
-            export_path = os.path.join(downloads_path, 'questions_export.json')
-
-            # Сохраняем вопросы в файл экспорта
-            with open(export_path, 'w', encoding='utf-8') as f:
-                json.dump(questions, f, ensure_ascii=False, indent=2)
-
-            self.show_popup(POPUP_TITLE_SUCCESS, f"База данных экспортирована в папку Загрузки:\n{export_path}")
-        except Exception as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать на Desktop: {str(e)}")
-
-    def import_database(self, instance):
+    def import_database(self, _instance):
+        """Импортирует базу данных"""
         try:
             if platform == 'android':
                 self._import_android()
             else:
                 self._import_desktop()
-        except Exception as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка при запуске импорта: {str(e)}")
+        except Exception as ex:
+            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка импорта: {str(ex)}")
+
+    def _export_android(self, questions):
+        """Экспорт для Android"""
+        from android.storage import primary_external_storage_path  # type: ignore
+        downloads_path = os.path.join(primary_external_storage_path(), "Download")
+        export_path = os.path.join(downloads_path, "questions_export.json")
+
+        if not os.path.exists(downloads_path):
+            os.makedirs(downloads_path)
+
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, ensure_ascii=False, indent=2)
+
+        self.show_popup(POPUP_TITLE_SUCCESS, f"База экспортирована в:\n{export_path}")
+
+    def _export_desktop(self, questions):
+        """Экспорт для Desktop"""
+        home_dir = os.path.expanduser("~")
+        downloads_path = os.path.join(home_dir, 'Downloads')
+
+        if not os.path.exists(downloads_path):
+            os.makedirs(downloads_path)
+
+        export_path = os.path.join(downloads_path, 'questions_export.json')
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, ensure_ascii=False, indent=2)
+
+        self.show_popup(POPUP_TITLE_SUCCESS, f"База экспортирована в:\n{export_path}")
 
     def _import_android(self):
-        """Импорт для Android платформы"""
-        try:
-            from android.storage import primary_external_storage_path  # type: ignore
+        """Импорт для Android"""
+        from android.storage import primary_external_storage_path  # type: ignore
+        downloads_path = os.path.join(primary_external_storage_path(), "Download")
+        import_path = os.path.join(downloads_path, "questions_export.json")
 
-            # Путь к папке Загрузки на Android
-            downloads_path = os.path.join(primary_external_storage_path(), "Download")
-            import_path = os.path.join(downloads_path, "questions_export.json")
+        if not os.path.exists(import_path):
+            self.show_popup(POPUP_TITLE_ERROR, "Файл questions_export.json не найден")
+            return
 
-            if not os.path.exists(import_path):
-                self.show_popup(POPUP_TITLE_ERROR, "Файл questions_export.json не найден в папке Загрузки")
-                return
-
-            self.show_popup(POPUP_TITLE_INFO, "Файл найден, начинаем импорт...")
-
-            # Загружаем вопросы из файла импорта
-            with open(import_path, 'r', encoding='utf-8') as f:
-                imported_questions = json.load(f)
-
-            # Проверяем валидность импортированных данных
-            if not self._validate_imported_questions(imported_questions):
-                return
-
-            # Сохраняем импортированные вопросы
-            if save_questions(imported_questions):
-                self.show_popup(POPUP_TITLE_SUCCESS,
-                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить импортированную базу данных")
-
-        except json.JSONDecodeError as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось импортировать базу: {str(e)}")
+        self._import_questions_from_file(import_path)
 
     def _import_desktop(self):
-        """Импорт для Desktop платформы"""
-        try:
-            # Для Desktop используем стандартный диалог выбора файла
-            from tkinter import Tk, filedialog
+        """Импорт для Desktop"""
+        from tkinter import Tk, filedialog
+        root = Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
 
-            root = Tk()
-            root.withdraw()
-            root.attributes('-topmost', True)
+        downloads_path = os.path.join(os.path.expanduser("~"), 'Downloads')
+        file_path = filedialog.askopenfilename(
+            initialdir=downloads_path,
+            title="Выберите файл с вопросами",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        root.destroy()
 
-            # Начинаем поиск в папке Загрузки
-            downloads_path = os.path.join(os.path.expanduser("~"), 'Downloads')
+        if not file_path:
+            return
 
-            file_path = filedialog.askopenfilename(
-                initialdir=downloads_path,
-                title="Выберите файл с вопросами",
-                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-            )
+        self._import_questions_from_file(file_path)
 
-            root.destroy()
+    def _import_questions_from_file(self, file_path):
+        """Импортирует вопросы из файла"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            imported_questions = json.load(f)
 
-            if not file_path:
-                self.show_popup(POPUP_TITLE_INFO, "Выбор файла отменен")
-                return
+        if not self._validate_imported_questions(imported_questions):
+            return
 
-            self.show_popup(POPUP_TITLE_INFO, "Файл выбран, обрабатываем...")
-
-            # Загружаем вопросы из файла импорта
-            with open(file_path, 'r', encoding='utf-8') as f:
-                imported_questions = json.load(f)
-
-            # Проверяем валидность импортированных данных
-            if not self._validate_imported_questions(imported_questions):
-                return
-
-            # Сохраняем импортированные вопросы
-            if save_questions(imported_questions):
-                self.show_popup(POPUP_TITLE_SUCCESS,
-                                f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
-                # Обновляем вопросы в приложении
-                self.app.update_questions()
-                self.load_questions()
-            else:
-                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить импортированную базу данных")
-
-        except json.JSONDecodeError as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось импортировать базу: {str(e)}")
+        if save_questions(imported_questions):
+            self.show_popup(POPUP_TITLE_SUCCESS, f"Импортировано {len(imported_questions)} вопросов")
+            self.app.update_questions()
+            self.load_questions()
+        else:
+            self.show_popup(POPUP_TITLE_ERROR, "Ошибка сохранения импортированной базы")
 
     def _validate_imported_questions(self, imported_questions):
         """Проверяет валидность импортированных вопросов"""
         if not isinstance(imported_questions, list):
-            self.show_popup(POPUP_TITLE_ERROR, "Некорректный формат файла импорта")
+            self.show_popup(POPUP_TITLE_ERROR, "Некорректный формат файла")
             return False
 
-        # Проверяем каждый вопрос на валидность
-        valid_questions = []
-        for question in imported_questions:
-            if (isinstance(question, dict) and
-                    'question' in question and
-                    'options' in question and
-                    'correct' in question):
-                valid_questions.append(question)
+        valid_questions = [q for q in imported_questions if
+                           isinstance(q, dict) and
+                           'question' in q and
+                           'options' in q and
+                           'correct' in q]
 
         if not valid_questions:
-            self.show_popup(POPUP_TITLE_ERROR, "В файле нет валидных вопросов")
+            self.show_popup(POPUP_TITLE_ERROR, "Нет валидных вопросов в файле")
             return False
 
         return True
 
-    def show_popup(self, title, message):
+    @staticmethod
+    def show_popup(title, message):
+        """Показывает всплывающее окно с сообщением"""
+        popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
+
         # Создаем ScrollView для длинных сообщений
         scroll = ScrollView(size_hint=(1, 0.8))
-
-        # Уменьшаем размер шрифта для лучшего отображения
         label = Label(
             text=message,
-            font_size=dp(14),  # Уменьшенный размер шрифта
+            font_size=dp(14),
             text_size=(Window.width * 0.7, None),
             halign='left',
             valign='top',
             size_hint_y=None
         )
         label.bind(texture_size=label.setter('size'))
-
         scroll.add_widget(label)
-
-        popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
         popup_layout.add_widget(scroll)
 
-        close_btn = Button(
-            text='OK',
-            size_hint_y=None,
-            height=dp(40),
-            font_size=dp(16)
-        )
+        # Кнопка закрытия
+        close_btn = Button(text='OK', size_hint_y=None, height=dp(40), font_size=dp(16))
         popup_layout.add_widget(close_btn)
 
-        popup = Popup(
-            title=title,
-            content=popup_layout,
-            size_hint=(0.9, 0.7)  # Увеличил размер попапа
-        )
+        # Создаем попап
+        popup = Popup(title=title, content=popup_layout, size_hint=(0.9, 0.7))
+
+        # Правильная привязка кнопки закрытия
         close_btn.bind(on_press=popup.dismiss)
+
         popup.open()
+        return popup  # Возвращаем ссылку на попап
 
 
 if __name__ == '__main__':
