@@ -372,9 +372,22 @@ class ExamTab(BoxLayout):
     def __init__(self, app, **kwargs):
         super().__init__(**kwargs)
         self.app = app
+        self._setup_ui()
+        self._initialize_state()
+        self.load_question()
+
+    def _setup_ui(self):
+        """Настраивает пользовательский интерфейс"""
         self.orientation = 'vertical'
         self.padding = dp(10)
         self.spacing = dp(10)
+
+        self._create_question_section()
+        self._create_options_section()
+        self._create_action_section()
+
+    def _initialize_state(self):
+        """Инициализирует состояние экзамена"""
         self.current_question = None
         self.correct_indices = []
         self.checkboxes = []
@@ -383,7 +396,8 @@ class ExamTab(BoxLayout):
         self.answered = False
         self.answer_correct = False
 
-        # Поле вопроса с ScrollView для длинных вопросов
+    def _create_question_section(self):
+        """Создает секцию с вопросом"""
         question_scroll = ScrollView(size_hint_y=None, height=dp(150))
         self.question_label = AutoHeightLabel(
             text='Загрузка вопросов...',
@@ -402,7 +416,9 @@ class ExamTab(BoxLayout):
         question_scroll.add_widget(self.question_label)
         self.add_widget(question_scroll)
 
-        # Область для вариантов ответов
+    def _create_options_section(self):
+        """Создает секцию с вариантами ответов"""
+        # Заголовок вариантов
         options_label = Label(
             text='Выберите все правильные ответы:',
             size_hint_y=None,
@@ -412,12 +428,15 @@ class ExamTab(BoxLayout):
         )
         self.add_widget(options_label)
 
+        # Прокручиваемая область вариантов
         self.options_scroll = ScrollView(size_hint=(1, 0.6))
         self.options_layout = BoxLayout(orientation='vertical', size_hint_y=None, spacing=dp(10))
         self.options_layout.bind(minimum_height=self.options_layout.setter('height'))
         self.options_scroll.add_widget(self.options_layout)
         self.add_widget(self.options_scroll)
 
+    def _create_action_section(self):
+        """Создает секцию с кнопками действий"""
         # Кнопка ответа/продолжения
         self.answer_btn = Button(
             text='Ответить',
@@ -439,10 +458,8 @@ class ExamTab(BoxLayout):
         )
         self.add_widget(self.status_label)
 
-        self.load_question()
-
     def reset_session(self):
-        """Сбросить сессию и начать заново"""
+        """Сбрасывает сессию и начинает заново"""
         self.used_questions.clear()
         self.load_question()
 
@@ -454,149 +471,200 @@ class ExamTab(BoxLayout):
         self.option_labels = []
 
     def load_question(self):
+        """Загружает новый вопрос для экзамена"""
+        self._reset_ui_state()
+
+        questions = load_questions()
+        if not self._validate_questions_availability(questions):
+            return
+
+        if not self._select_question(questions):
+            return
+
+        self._display_question()
+        self._create_options()
+
+    def _reset_ui_state(self):
+        """Сбрасывает состояние UI для нового вопроса"""
         self.clear_options()
         self.answered = False
         self.answer_btn.text = 'Ответить'
+        self.answer_btn.disabled = False
         self.status_label.text = ''
 
-        # Загружаем вопросы
-        questions = load_questions()
-
+    def _validate_questions_availability(self, questions):
+        """Проверяет доступность вопросов"""
         if not questions:
-            self.question_label.text = "В базе нет вопросов! Добавьте вопросы на вкладке 'Добавить вопрос'."
-            self.answer_btn.disabled = True
-            return
+            self._show_no_questions_message()
+            return False
+        return True
 
-        # Проверяем, остались ли неиспользованные вопросы
+    def _show_no_questions_message(self):
+        """Показывает сообщение об отсутствии вопросов"""
+        self.question_label.text = "В базе нет вопросов! Добавьте вопросы на вкладке 'Добавить вопрос'."
+        self.answer_btn.disabled = True
+
+    def _select_question(self, questions):
+        """Выбирает случайный вопрос из доступных"""
         available_questions = [q for q in questions if q['question'] not in self.used_questions]
 
         if not available_questions:
-            self.question_label.text = "Все вопросы закончились! Обновите сессию на вкладке редактирования."
-            self.answer_btn.disabled = True
-            return
+            self._show_all_questions_used_message()
+            return False
 
-        self.answer_btn.disabled = False
-
-        # Выбираем случайный вопрос из доступных и перемешиваем варианты ответов
         self.current_question = random.choice(available_questions)
         self.used_questions.add(self.current_question['question'])
+        return True
 
-        # Создаем перемешанный список вариантов ответов
-        options_with_indices = list(enumerate(self.current_question['options']))
-        random.shuffle(options_with_indices)
+    def _show_all_questions_used_message(self):
+        """Показывает сообщение о том, что все вопросы использованы"""
+        self.question_label.text = "Все вопросы закончились! Обновите сессию на вкладке редактирования."
+        self.answer_btn.disabled = True
 
-        # Сохраняем правильные ответы в соответствии с новым порядком
-        original_correct = [int(idx) - 1 for idx in self.current_question['correct']]
-        self.correct_indices = []
-
-        for new_index, (original_index, option_text) in enumerate(options_with_indices):
-            if original_index in original_correct:
-                self.correct_indices.append(new_index)
-
-        # Устанавливаем текст вопроса
+    def _display_question(self):
+        """Отображает текст вопроса"""
         if self.current_question:
             self.question_label.text = self.current_question['question']
         else:
             self.question_label.text = "Ошибка загрузки вопроса"
-            return
 
-        # Создаем чекбоксы для вариантов ответов (в перемешанном порядке)
-        for new_index, (original_index, option_text) in enumerate(options_with_indices):
-            option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))  # Добавил spacing, посмотрим)
+    def _create_options(self):
+        """Создает варианты ответов в перемешанном порядке"""
+        options_with_indices = list(enumerate(self.current_question['options']))
+        random.shuffle(options_with_indices)
 
-            checkbox = CheckBox(size_hint_x=0.2)
-            checkbox.disabled = self.answered  # Блокируем чекбоксы после ответа
+        self._calculate_correct_indices(options_with_indices)
+        self._create_option_widgets(options_with_indices)
 
-            # Используем AutoHeightLabel для автоматического изменения высоты
-            label = AutoHeightLabel(
-                text=option_text,
-                text_size=(Window.width - dp(80), None),  # Уменьшил ширину для учета padding
-                halign='left',
-                valign='middle',
-                font_size=dp(16),
-                color=(0, 0, 0, 1),  # Черный цвет текста
-                min_height=dp(80),  # Минимальная высота для длинных ответов
-                padding_x=dp(10)  # Добавил горизонтальные отступы
-            )
+    def _calculate_correct_indices(self, options_with_indices):
+        """Вычисляет индексы правильных ответов после перемешивания"""
+        original_correct = [int(idx) - 1 for idx in self.current_question['correct']]
+        self.correct_indices = []
 
-            # Добавляем белый фон только для текста ответа
-            with label.canvas.before:
-                Color(1, 1, 1, 1)  # Белый цвет
-                label.rect = Rectangle(pos=label.pos, size=label.size)
+        for new_index, (original_index, _) in enumerate(options_with_indices):
+            if original_index in original_correct:
+                self.correct_indices.append(new_index)
 
-            # Обновляем прямоугольник при изменении размера или позиции
-            label.bind(pos=self.update_label_rect, size=self.update_label_rect)
-            label.bind(size=label.setter('text_size'))
+    def _create_option_widgets(self, options_with_indices):
+        """Создает виджеты для вариантов ответов"""
+        for new_index, (_, option_text) in enumerate(options_with_indices):
+            self._create_single_option(new_index, option_text)
 
-            option_layout.add_widget(checkbox)
-            option_layout.add_widget(label)
-            self.options_layout.add_widget(option_layout)
-            self.checkboxes.append(checkbox)
-            self.option_labels.append(label)
+    def _create_single_option(self, index, option_text):
+        """Создает один вариант ответа с чекбоксом и текстом"""
+        option_layout = BoxLayout(size_hint_y=None, height=dp(100), spacing=dp(10))
+
+        checkbox = CheckBox(size_hint_x=0.2)
+        checkbox.disabled = self.answered
+
+        label = self._create_option_label(option_text)
+
+        option_layout.add_widget(checkbox)
+        option_layout.add_widget(label)
+        self.options_layout.add_widget(option_layout)
+
+        self.checkboxes.append(checkbox)
+        self.option_labels.append(label)
+
+    def _create_option_label(self, text):
+        """Создает метку для варианта ответа с белым фоном"""
+        label = AutoHeightLabel(
+            text=text,
+            text_size=(Window.width - dp(80), None),
+            halign='left',
+            valign='middle',
+            font_size=dp(16),
+            color=(0, 0, 0, 1),
+            min_height=dp(80),
+            padding_x=dp(10)
+        )
+
+        # Добавляем белый фон
+        with label.canvas.before:
+            Color(1, 1, 1, 1)
+            label.rect = Rectangle(pos=label.pos, size=label.size)
+
+        label.bind(pos=self.update_label_rect, size=self.update_label_rect)
+        label.bind(size=label.setter('text_size'))
+
+        return label
 
     def update_label_rect(self, instance, value):
+        """Обновляет позицию и размер фона метки"""
         instance.rect.pos = instance.pos
         instance.rect.size = instance.size
 
     def on_answer_btn_press(self, instance):
+        """Обрабатывает нажатие кнопки ответа/продолжения"""
         if not self.answered:
             self.check_answer()
         else:
             self.load_question()
 
-    # подсветку фона:
     def check_answer(self):
-        selected_indices = []
-        for i, checkbox in enumerate(self.checkboxes):
-            if checkbox.active:
-                selected_indices.append(i)
+        """Проверяет выбранные ответы"""
+        selected_indices = self._get_selected_indices()
 
-        if not selected_indices:
-            self.status_label.text = "Выберите хотя бы один ответ!"
-            self.status_label.color = (1, 0, 0, 1)  # Красный цвет
+        if not self._validate_selection(selected_indices):
             return
 
-        # Блокируем чекбоксы после ответа
+        self._disable_checkboxes()
+        self._process_answer(selected_indices)
+
+    def _get_selected_indices(self):
+        """Возвращает индексы выбранных ответов"""
+        return [i for i, checkbox in enumerate(self.checkboxes) if checkbox.active]
+
+    def _validate_selection(self, selected_indices):
+        """Проверяет, что выбран хотя бы один ответ"""
+        if not selected_indices:
+            self.status_label.text = "Выберите хотя бы один ответ!"
+            self.status_label.color = (1, 0, 0, 1)
+            return False
+        return True
+
+    def _disable_checkboxes(self):
+        """Блокирует чекбоксы после ответа"""
         for checkbox in self.checkboxes:
             checkbox.disabled = True
 
+    def _process_answer(self, selected_indices):
+        """Обрабатывает ответ пользователя"""
         self.answered = True
         self.answer_btn.text = 'Далее'
 
-        # Проверяем правильность ответа
         if set(selected_indices) == set(self.correct_indices):
-            self.handle_correct_answer()
+            self._handle_correct_answer()
         else:
-            self.handle_incorrect_answer(selected_indices)
+            self._handle_incorrect_answer(selected_indices)
 
-    def handle_correct_answer(self):
+    def _handle_correct_answer(self):
         """Обрабатывает правильный ответ"""
         self.status_label.text = "Правильно!"
-        self.status_label.color = (0, 1, 0, 1)  # Зеленый цвет
+        self.status_label.color = (0, 1, 0, 1)
         self.answer_correct = True
-        self.highlight_correct_answers((0.7, 1, 0.7, 1))  # Светло-зеленый
+        self._highlight_answers(self.correct_indices, (0.7, 1, 0.7, 1))
 
-    def handle_incorrect_answer(self, selected_indices):
+    def _handle_incorrect_answer(self, selected_indices):
         """Обрабатывает неправильный ответ"""
         self.status_label.text = "Неправильно!"
-        self.status_label.color = (1, 0, 0, 1)  # Красный цвет
+        self.status_label.color = (1, 0, 0, 1)
         self.answer_correct = False
 
-        # Подсвечиваем выбранные неправильные ответы красным
-        for i in selected_indices:
-            if i not in self.correct_indices:
-                self.highlight_answer(i, (1, 0.7, 0.7, 1))  # Светло-красный
+        # Подсвечиваем неправильно выбранные ответы
+        incorrect_selected = [i for i in selected_indices if i not in self.correct_indices]
+        self._highlight_answers(incorrect_selected, (1, 0.7, 0.7, 1))
 
-        # Подсвечиваем правильные ответы зеленым
-        self.highlight_correct_answers((0.7, 1, 0.7, 1))  # Светло-зеленый
+        # Подсвечиваем правильные ответы
+        self._highlight_answers(self.correct_indices, (0.7, 1, 0.7, 1))
 
-    def highlight_correct_answers(self, color):
-        """Подсвечивает все правильные ответы указанным цветом"""
-        for i in self.correct_indices:
-            self.highlight_answer(i, color)
+    def _highlight_answers(self, indices, color):
+        """Подсвечивает ответы указанным цветом"""
+        for i in indices:
+            self._highlight_single_answer(i, color)
 
-    def highlight_answer(self, index, color):
-        """Подсвечивает конкретный ответ указанным цветом"""
+    def _highlight_single_answer(self, index, color):
+        """Подсвечивает один ответ указанным цветом"""
         self.option_labels[index].canvas.before.clear()
         with self.option_labels[index].canvas.before:
             Color(*color)
