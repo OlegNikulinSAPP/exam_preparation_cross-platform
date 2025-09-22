@@ -9,21 +9,28 @@ from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
 from kivy.metrics import dp
-from kivy.properties import NumericProperty, ObjectProperty
+from kivy.properties import NumericProperty
 from kivy.utils import platform
 from kivy.config import Config
 from kivy.graphics import Color, Rectangle
 import random
 import os
 import json
-from kivy.logger import Logger
-import time
 
 # Настройки логирования
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 Logger = logging.getLogger('ExamApp')
+
+# Глобальная настройка для имени файла с вопросами
+QUESTIONS_FILENAME = 'questions.json'
+# Определение константы для заголовка всплывающего окна
+POPUP_TITLE_INFO = "Информация"
+# Определим константу для сообщений об ошибках
+POPUP_TITLE_ERROR = "Ошибка"
+# Константа для заголовков успешных действий
+POPUP_TITLE_SUCCESS = "Успех"
 
 # Настройки окна
 Config.set('graphics', 'resizable', '1')
@@ -35,8 +42,8 @@ else:
 # Определяем путь к файлу вопросов
 if platform == 'android':
     try:
-        from android.storage import app_storage_path
-        from android.permissions import request_permissions, Permission
+        from android.storage import app_storage_path  # type: ignore
+        from android.permissions import request_permissions, Permission  # type: ignore
 
         # Запрашиваем разрешения
         request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
@@ -46,14 +53,14 @@ if platform == 'android':
         data_dir = os.path.join(storage_path, 'data')
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
-        QUESTIONS_FILE = os.path.join(data_dir, 'questions.json')
+        QUESTIONS_FILE = os.path.join(data_dir, QUESTIONS_FILENAME)
         Logger.info(f"Android data path: {QUESTIONS_FILE}")
 
     except Exception as e:
         Logger.error(f"Android init error: {e}")
-        QUESTIONS_FILE = 'questions.json'
+        QUESTIONS_FILE = QUESTIONS_FILENAME
 else:
-    QUESTIONS_FILE = 'questions.json'
+    QUESTIONS_FILE = QUESTIONS_FILENAME
 
 
 def load_questions():
@@ -107,7 +114,6 @@ class AutoHeightTextInput(TextInput):
 
     def on_text_change(self, instance, value):
         # Вычисляем необходимую высоту на основе текста
-        text_width = self.width - self.padding[0] - self.padding[2]
         lines = len(self._lines)
         line_height = self.line_height + self.line_spacing
         new_height = max(self.min_height, lines * line_height + self.padding[1] + self.padding[3])
@@ -121,7 +127,7 @@ class AutoHeightTextInput(TextInput):
                     self.parent.parent.height = new_height
 
 
-# Кастомный Label с возможностью изменения цвета фона
+# Кастомный Label изменения цвета фона
 class AutoHeightLabel(Label):
     min_height = NumericProperty(dp(40))
 
@@ -265,7 +271,7 @@ class AddQuestionTab(BoxLayout):
 
     def add_option(self, instance=None):
         if len(self.option_widgets) >= 6:
-            self.show_popup("Информация", "Максимальное количество вариантов - 6")
+            self.show_popup(POPUP_TITLE_INFO, "Максимальное количество вариантов - 6")
             return
 
         option_layout = BoxLayout(size_hint_y=None, height=dp(60))
@@ -292,7 +298,7 @@ class AddQuestionTab(BoxLayout):
             last_option = self.option_widgets.pop()
             self.options_layout.remove_widget(last_option[0].parent)
         else:
-            self.show_popup("Информация", "Минимальное количество вариантов - 2")
+            self.show_popup(POPUP_TITLE_INFO, "Минимальное количество вариантов - 2")
 
     def save_question(self, instance):
         question_text = self.question_input.text.strip()
@@ -309,15 +315,15 @@ class AddQuestionTab(BoxLayout):
 
         # Проверяем валидность данных
         if not question_text:
-            self.show_popup("Ошибка", "Введите вопрос!")
+            self.show_popup(POPUP_TITLE_ERROR, "Введите вопрос!")
             return
 
         if len(options) < 2:
-            self.show_popup("Ошибка", "Должно быть хотя бы два варианта ответа!")
+            self.show_popup(POPUP_TITLE_ERROR, "Должно быть хотя бы два варианта ответа!")
             return
 
         if not correct_options:
-            self.show_popup("Ошибка", "Выберите хотя бы один правильный ответ!")
+            self.show_popup(POPUP_TITLE_ERROR, "Выберите хотя бы один правильный ответ!")
             return
 
         # Загружаем существующие вопросы
@@ -334,7 +340,7 @@ class AddQuestionTab(BoxLayout):
 
         # Сохраняем вопросы
         if not save_questions(questions):
-            self.show_popup("Ошибка", "Не удалось сохранить вопрос! Проверьте разрешения приложения.")
+            self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопрос! Проверьте разрешения приложения.")
             return
 
         # Очищаем форму
@@ -350,7 +356,7 @@ class AddQuestionTab(BoxLayout):
         # Уведомляем приложение об обновлении вопросов
         self.app.update_questions()
 
-        self.show_popup("Успех", "Вопрос добавлен!")
+        self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос добавлен!")
 
     def show_popup(self, title, message):
         popup_layout = BoxLayout(orientation='vertical', padding=dp(10))
@@ -382,14 +388,14 @@ class ExamTab(BoxLayout):
         self.question_label = AutoHeightLabel(
             text='Загрузка вопросов...',
             size_hint_y=None,
-            text_size=(Window.width - dp(30), None),  # Учитываем padding скролла
+            text_size=(Window.width - dp(30), None),
             halign='left',
             valign='top',
-            font_size=dp(18),  # Немного уменьшил шрифт для лучшего отображения
+            font_size=dp(18),
             bold=True,
             color=(1, 1, 0, 1),
             min_height=dp(150),
-            padding_x=dp(10),  # Добавил отступы
+            padding_x=dp(10),
             padding_y=dp(10)
         )
         self.question_label.bind(size=self.question_label.setter('text_size'))
@@ -441,7 +447,9 @@ class ExamTab(BoxLayout):
         self.load_question()
 
     def clear_options(self):
-        self.options_layout.clear_widgets()
+        """Очищает все виджеты и списки вариантов ответов"""
+        if hasattr(self, 'options_layout'):
+            self.options_layout.clear_widgets()
         self.checkboxes = []
         self.option_labels = []
 
@@ -557,41 +565,42 @@ class ExamTab(BoxLayout):
 
         # Проверяем правильность ответа
         if set(selected_indices) == set(self.correct_indices):
-            self.status_label.text = "Правильно!"
-            self.status_label.color = (0, 1, 0, 1)  # Зеленый цвет
-            self.answer_correct = True
-
-            # Подсвечиваем правильные ответы зеленым (только текст)
-            for i in self.correct_indices:
-                self.option_labels[i].canvas.before.clear()
-                with self.option_labels[i].canvas.before:
-                    Color(0.7, 1, 0.7, 1)  # Светло-зеленый
-                    Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
+            self.handle_correct_answer()
         else:
-            self.status_label.text = "Неправильно!"
-            self.status_label.color = (1, 0, 0, 1)  # Красный цвет
-            self.answer_correct = False
+            self.handle_incorrect_answer(selected_indices)
 
-            # Подсвечиваем выбранные неправильные ответы красным (только текст)
-            for i in selected_indices:
-                if i not in self.correct_indices:
-                    self.option_labels[i].canvas.before.clear()
-                    with self.option_labels[i].canvas.before:
-                        Color(1, 0.7, 0.7, 1)  # Светло-красный
-                        Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
+    def handle_correct_answer(self):
+        """Обрабатывает правильный ответ"""
+        self.status_label.text = "Правильно!"
+        self.status_label.color = (0, 1, 0, 1)  # Зеленый цвет
+        self.answer_correct = True
+        self.highlight_correct_answers((0.7, 1, 0.7, 1))  # Светло-зеленый
 
-            # Подсвечиваем правильные ответы зеленым (только текст)
-            for i in self.correct_indices:
-                self.option_labels[i].canvas.before.clear()
-                with self.option_labels[i].canvas.before:
-                    Color(0.7, 1, 0.7, 1)  # Светло-зеленый
-                    Rectangle(pos=self.option_labels[i].pos, size=self.option_labels[i].size)
+    def handle_incorrect_answer(self, selected_indices):
+        """Обрабатывает неправильный ответ"""
+        self.status_label.text = "Неправильно!"
+        self.status_label.color = (1, 0, 0, 1)  # Красный цвет
+        self.answer_correct = False
 
-    def clear_options(self):
-        # Очищаем все виджеты и списки
-        self.options_layout.clear_widgets()
-        self.checkboxes = []
-        self.option_labels = []
+        # Подсвечиваем выбранные неправильные ответы красным
+        for i in selected_indices:
+            if i not in self.correct_indices:
+                self.highlight_answer(i, (1, 0.7, 0.7, 1))  # Светло-красный
+
+        # Подсвечиваем правильные ответы зеленым
+        self.highlight_correct_answers((0.7, 1, 0.7, 1))  # Светло-зеленый
+
+    def highlight_correct_answers(self, color):
+        """Подсвечивает все правильные ответы указанным цветом"""
+        for i in self.correct_indices:
+            self.highlight_answer(i, color)
+
+    def highlight_answer(self, index, color):
+        """Подсвечивает конкретный ответ указанным цветом"""
+        self.option_labels[index].canvas.before.clear()
+        with self.option_labels[index].canvas.before:
+            Color(*color)
+            Rectangle(pos=self.option_labels[index].pos, size=self.option_labels[index].size)
 
 
 class EditQuestionsTab(BoxLayout):
@@ -694,7 +703,7 @@ class EditQuestionsTab(BoxLayout):
         """Сбросить сессию экзамена"""
         if hasattr(self.app, 'exam_content'):
             self.app.exam_content.reset_session()
-            self.show_popup("Успех", "Сессия экзамена сброшена!")
+            self.show_popup(POPUP_TITLE_SUCCESS, "Сессия экзамена сброшена!")
 
     def load_questions(self, instance=None):
         self.questions_layout.clear_widgets()
@@ -824,7 +833,7 @@ class EditQuestionsTab(BoxLayout):
         # Функции для кнопок
         def add_option(instance):
             if len(option_widgets) >= 6:
-                self.show_popup("Информация", "Максимальное количество вариантов - 6")
+                self.show_popup(POPUP_TITLE_INFO, "Максимальное количество вариантов - 6")
                 return
 
             option_layout = BoxLayout(size_hint_y=None, height=dp(60))
@@ -847,7 +856,7 @@ class EditQuestionsTab(BoxLayout):
                 last_option = option_widgets.pop()
                 options_layout.remove_widget(last_option[0].parent)
             else:
-                self.show_popup("Информация", "Минимальное количество вариантов - 2")
+                self.show_popup(POPUP_TITLE_INFO, "Минимальное количество вариантов - 2")
 
         def save_question(instance):
             nonlocal option_widgets
@@ -865,15 +874,15 @@ class EditQuestionsTab(BoxLayout):
 
             # Проверяем валидность данных
             if not new_question_text:
-                self.show_popup("Ошибка", "Введите вопрос!")
+                self.show_popup(POPUP_TITLE_ERROR, "Введите вопрос!")
                 return
 
             if len(options) < 2:
-                self.show_popup("Ошибка", "Должно быть хотя бы два варианта ответа!")
+                self.show_popup(POPUP_TITLE_ERROR, "Должно быть хотя бы два варианта ответа!")
                 return
 
             if not correct_options:
-                self.show_popup("Ошибка", "Выберите хотя бы один правильный ответ!")
+                self.show_popup(POPUP_TITLE_ERROR, "Выберите хотя бы один правильный ответ!")
                 return
 
             # Обновляем вопрос
@@ -885,14 +894,14 @@ class EditQuestionsTab(BoxLayout):
 
             # Сохраняем вопросы
             if not save_questions(questions):
-                self.show_popup("Ошибка", "Не удалось сохранить вопросы!")
+                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
                 return
 
             popup.dismiss()
             self.load_questions()
             # Уведомляем приложение об обновлении вопросов
             self.app.update_questions()
-            self.show_popup("Успех", "Вопрос обновлен!")
+            self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос обновлен!")
 
         def cancel_edit(instance):
             popup.dismiss()
@@ -929,14 +938,14 @@ class EditQuestionsTab(BoxLayout):
 
                 # Сохраняем вопросы
                 if not save_questions(questions):
-                    self.show_popup("Ошибка", "Не удалось сохранить вопросы!")
+                    self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить вопросы!")
                     return
 
                 confirm_popup.dismiss()
                 self.load_questions()
                 # Уведомляем приложение об обновлении вопросов
                 self.app.update_questions()
-                self.show_popup("Успех", "Вопрос удален!")
+                self.show_popup(POPUP_TITLE_SUCCESS, "Вопрос удален!")
 
             def cancel_delete(instance):
                 confirm_popup.dismiss()
@@ -952,7 +961,7 @@ class EditQuestionsTab(BoxLayout):
             questions = load_questions()
 
             if not questions:
-                self.show_popup("Ошибка", "Нет вопросов для экспорта")
+                self.show_popup(POPUP_TITLE_ERROR, "Нет вопросов для экспорта")
                 return
 
             if platform == 'android':
@@ -964,12 +973,12 @@ class EditQuestionsTab(BoxLayout):
             error_msg = str(e)
             if len(error_msg) > 100:
                 error_msg = error_msg[:100] + "..."
-            self.show_popup("Ошибка", f"Не удалось экспортировать базу:\n{error_msg}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать базу:\n{error_msg}")
 
     def _export_android(self, questions):
         """Экспорт для Android"""
         try:
-            from android.storage import primary_external_storage_path
+            from android.storage import primary_external_storage_path  # type: ignore
 
             # Путь к папке Загрузки на Android
             downloads_path = os.path.join(primary_external_storage_path(), "Download")
@@ -983,10 +992,10 @@ class EditQuestionsTab(BoxLayout):
             with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(questions, f, ensure_ascii=False, indent=2)
 
-            self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
+            self.show_popup(POPUP_TITLE_SUCCESS, f"База данных экспортирована в папку Загрузки:\n{export_path}")
 
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось экспортировать на Android: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать на Android: {str(e)}")
 
     def _export_desktop(self, questions):
         """Экспорт для Desktop"""
@@ -1005,9 +1014,9 @@ class EditQuestionsTab(BoxLayout):
             with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(questions, f, ensure_ascii=False, indent=2)
 
-            self.show_popup("Успех", f"База данных экспортирована в папку Загрузки:\n{export_path}")
+            self.show_popup(POPUP_TITLE_SUCCESS, f"База данных экспортирована в папку Загрузки:\n{export_path}")
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось экспортировать на Desktop: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось экспортировать на Desktop: {str(e)}")
 
     def import_database(self, instance):
         try:
@@ -1016,22 +1025,22 @@ class EditQuestionsTab(BoxLayout):
             else:
                 self._import_desktop()
         except Exception as e:
-            self.show_popup("Ошибка", f"Ошибка при запуске импорта: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка при запуске импорта: {str(e)}")
 
     def _import_android(self):
         """Импорт для Android платформы"""
         try:
-            from android.storage import primary_external_storage_path
+            from android.storage import primary_external_storage_path  # type: ignore
 
             # Путь к папке Загрузки на Android
             downloads_path = os.path.join(primary_external_storage_path(), "Download")
             import_path = os.path.join(downloads_path, "questions_export.json")
 
             if not os.path.exists(import_path):
-                self.show_popup("Ошибка", "Файл questions_export.json не найден в папке Загрузки")
+                self.show_popup(POPUP_TITLE_ERROR, "Файл questions_export.json не найден в папке Загрузки")
                 return
 
-            self.show_popup("Информация", "Файл найден, начинаем импорт...")
+            self.show_popup(POPUP_TITLE_INFO, "Файл найден, начинаем импорт...")
 
             # Загружаем вопросы из файла импорта
             with open(import_path, 'r', encoding='utf-8') as f:
@@ -1043,18 +1052,18 @@ class EditQuestionsTab(BoxLayout):
 
             # Сохраняем импортированные вопросы
             if save_questions(imported_questions):
-                self.show_popup("Успех",
+                self.show_popup(POPUP_TITLE_SUCCESS,
                                 f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
                 # Обновляем вопросы в приложении
                 self.app.update_questions()
                 self.load_questions()
             else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить импортированную базу данных")
 
         except json.JSONDecodeError as e:
-            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка формата JSON: {str(e)}")
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось импортировать базу: {str(e)}")
 
     def _import_desktop(self):
         """Импорт для Desktop платформы"""
@@ -1078,10 +1087,10 @@ class EditQuestionsTab(BoxLayout):
             root.destroy()
 
             if not file_path:
-                self.show_popup("Информация", "Выбор файла отменен")
+                self.show_popup(POPUP_TITLE_INFO, "Выбор файла отменен")
                 return
 
-            self.show_popup("Информация", "Файл выбран, обрабатываем...")
+            self.show_popup(POPUP_TITLE_INFO, "Файл выбран, обрабатываем...")
 
             # Загружаем вопросы из файла импорта
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -1093,23 +1102,23 @@ class EditQuestionsTab(BoxLayout):
 
             # Сохраняем импортированные вопросы
             if save_questions(imported_questions):
-                self.show_popup("Успех",
+                self.show_popup(POPUP_TITLE_SUCCESS,
                                 f"База данных успешно импортирована! Загружено {len(imported_questions)} вопросов.")
                 # Обновляем вопросы в приложении
                 self.app.update_questions()
                 self.load_questions()
             else:
-                self.show_popup("Ошибка", "Не удалось сохранить импортированную базу данных")
+                self.show_popup(POPUP_TITLE_ERROR, "Не удалось сохранить импортированную базу данных")
 
         except json.JSONDecodeError as e:
-            self.show_popup("Ошибка", f"Ошибка формата JSON: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Ошибка формата JSON: {str(e)}")
         except Exception as e:
-            self.show_popup("Ошибка", f"Не удалось импортировать базу: {str(e)}")
+            self.show_popup(POPUP_TITLE_ERROR, f"Не удалось импортировать базу: {str(e)}")
 
     def _validate_imported_questions(self, imported_questions):
         """Проверяет валидность импортированных вопросов"""
         if not isinstance(imported_questions, list):
-            self.show_popup("Ошибка", "Некорректный формат файла импорта")
+            self.show_popup(POPUP_TITLE_ERROR, "Некорректный формат файла импорта")
             return False
 
         # Проверяем каждый вопрос на валидность
@@ -1122,7 +1131,7 @@ class EditQuestionsTab(BoxLayout):
                 valid_questions.append(question)
 
         if not valid_questions:
-            self.show_popup("Ошибка", "В файле нет валидных вопросов")
+            self.show_popup(POPUP_TITLE_ERROR, "В файле нет валидных вопросов")
             return False
 
         return True
